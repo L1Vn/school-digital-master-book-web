@@ -1,193 +1,139 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 
+const API_URL = "https://school-digital-master-book-api-production.up.railway.app";
+
 export default function Login() {
   const router = useRouter();
 
-  // =========================
-  //  AKUN GURU MAPEL
-  // =========================
-  const guruAccounts = {
-    mtk: { username: "guru_mtk", password: "mtk123" },
-    ipa: { username: "guru_ipa", password: "ipa123" },
-    ips: { username: "guru_ips", password: "ips123" },
-    bing: { username: "guru_bing", password: "bing123" },
-    bindo: { username: "guru_bindo", password: "bindo123" },
-  };
-
-  // =========================
-  //  AKUN WALI KELAS
-  // =========================
-  const waliAccounts = {
-    "7a": { username: "wali_7a", password: "7a123" },
-    "7b": { username: "wali_7b", password: "7b123" },
-    "8a": { username: "wali_8a", password: "8a123" },
-    "8b": { username: "wali_8b", password: "8b123" },
-    "9a": { username: "wali_9a", password: "9a123" },
-    "9b": { username: "wali_9b", password: "9b123" },
-  };
-
-  const [role, setRole] = useState("admin");
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // DATA SISWA (untuk alumni)
-  const [students, setStudents] = useState([]);
-
+  // =========================
+  // AUTO CEK LOGIN
+  // =========================
   useEffect(() => {
-    const saved = localStorage.getItem("students_data");
-    if (saved) setStudents(JSON.parse(saved));
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    async function checkLogin() {
+      try {
+        const res = await fetch(`${API_URL}/api/current-user`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) throw new Error("Token invalid");
+
+        const user = await res.json();
+        redirectByRole(user);
+      } catch {
+        localStorage.clear();
+      }
+    }
+
+    checkLogin();
   }, []);
 
   // =========================
-  //  HANDLE LOGIN
+  // HANDLE LOGIN
   // =========================
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
-    // ======== LOGIN ADMIN ========
-    if (
-      role === "admin" &&
-      form.username === "admin" &&
-      form.password === "admin123"
-    ) {
-      localStorage.setItem("logged_in", "admin");
-      return router.push("/");
+    try {
+      const res = await fetch(`${API_URL}/api/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) throw new Error("Email atau password salah");
+
+      const data = await res.json();
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      redirectByRole(data.user);
+    } catch (err) {
+      setError(err.message || "Terjadi kesalahan");
+    } finally {
+      setLoading(false);
     }
-
-    // ======== LOGIN GURU MAPEL ========
-    if (role === "guru") {
-      for (const mapel in guruAccounts) {
-        const acc = guruAccounts[mapel];
-        if (form.username === acc.username && form.password === acc.password) {
-          localStorage.setItem("logged_in", `guru_${mapel}`);
-          return router.push(`/guru/${mapel}`);
-        }
-      }
-      return setError("Username atau password guru salah!");
-    }
-
-    // ======== LOGIN WALI KELAS ========
-    if (role === "walikelas") {
-      for (const kelas in waliAccounts) {
-        const acc = waliAccounts[kelas];
-        if (form.username === acc.username && form.password === acc.password) {
-          localStorage.setItem("logged_in", `walikelas_${kelas}`);
-          return router.push(`/walikelas/${kelas}`);
-        }
-      }
-      return setError("Akun wali kelas salah!");
-    }
-
-    // ======== LOGIN ALUMNI ========
-    if (role === "alumni") {
-      const user = students.find((s) => s.nisn === form.username);
-
-      if (!user) return setError("NISN tidak ditemukan!");
-
-      if (user.birth_date !== form.password)
-        return setError("Password salah! Gunakan format YYYY-MM-DD");
-
-      localStorage.setItem("logged_in", `alumni_${user.nisn}`);
-      return router.push(`/alumni/${user.nisn}`);
-    }
-
-    setError("Username atau password salah!");
   }
 
   // =========================
-  //  RETURN UI LOGIN
+  // REDIRECT BERDASARKAN ROLE
+  // =========================
+  function redirectByRole(user) {
+    switch (user.role) {
+      case "admin":
+        router.replace("/admin");
+        break;
+
+      case "guru":
+        router.replace(`/guru/${user.mapel}`);
+        break;
+
+      case "walikelas":
+        router.replace(`/walikelas/${user.kelas}`);
+        break;
+
+      case "alumni":
+        router.replace(`/alumni/${user.nisn}`);
+        break;
+
+      default:
+        setError("Role tidak dikenali");
+    }
+  }
+
+  // =========================
+  // UI
   // =========================
   return (
     <div className="flex justify-center items-center min-h-screen bg-[#EEF2FF]">
-      <div className="bg-white p-8 rounded-2xl shadow-soft w-full max-w-sm">
-        <h2 className="text-2xl font-bold text-center mb-6">Login Sistem</h2>
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm">
+        <h2 className="text-2xl font-bold text-center mb-6">
+          Login Sistem Akademik
+        </h2>
 
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-        {/* Role Selector */}
-        <div className="grid grid-cols-2 gap-2 mb-5">
-          <button
-            onClick={() => setRole("admin")}
-            className={`py-2 rounded-lg border ${
-              role === "admin" ? "bg-primary text-white" : "bg-gray-100"
-            }`}
-          >
-            Admin
-          </button>
-
-          <button
-            onClick={() => setRole("guru")}
-            className={`py-2 rounded-lg border ${
-              role === "guru" ? "bg-primary text-white" : "bg-gray-100"
-            }`}
-          >
-            Guru Mapel
-          </button>
-
-          <button
-            onClick={() => setRole("walikelas")}
-            className={`py-2 rounded-lg border ${
-              role === "walikelas" ? "bg-primary text-white" : "bg-gray-100"
-            }`}
-          >
-            Wali Kelas
-          </button>
-
-          <button
-            onClick={() => setRole("alumni")}
-            className={`py-2 rounded-lg border ${
-              role === "alumni" ? "bg-primary text-white" : "bg-gray-100"
-            }`}
-          >
-            Alumni
-          </button>
-        </div>
-
-        {/* Form Login */}
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <input
-            type="text"
-            placeholder={
-              role === "alumni"
-                ? "Masukkan NISN"
-                : "Username"
-            }
-            className="p-3 border rounded-lg"
-            value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            type="email"
+            placeholder="Email"
+            className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            required
           />
 
           <input
-            type={role === "alumni" ? "text" : "password"}
-            placeholder={
-              role === "alumni"
-                ? "Password = Tanggal Lahir (YYYY-MM-DD)"
-                : "Password"
-            }
-            className="p-3 border rounded-lg"
+            type="password"
+            placeholder="Password"
+            className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
           />
 
           <button
             type="submit"
-            className="bg-primary text-white py-3 rounded-lg"
+            disabled={loading}
+            className="bg-primary text-white py-3 rounded-lg hover:bg-primary/90 transition-colors"
           >
-            Login sebagai{" "}
-            {role === "admin"
-              ? "Admin"
-              : role === "guru"
-              ? "Guru Mapel"
-              : role === "walikelas"
-              ? "Wali Kelas"
-              : "Alumni"}
+            {loading ? "Memproses..." : "Login"}
           </button>
         </form>
 
         <p className="text-center mt-4 text-sm text-gray-600">
           Masuk sebagai guest?{" "}
-          <a href="/" className="text-primary font-semibold">
+          <a href="/" className="text-primary font-semibold hover:underline">
             Lanjutkan tanpa login
           </a>
         </p>

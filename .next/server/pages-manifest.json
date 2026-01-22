@@ -2,9 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/guru/mtk": "pages/guru/mtk.js",
+  "/login": "pages/login.js",
   "/": "pages/index.js",
-  "/guru/bindo": "pages/guru/bindo.js",
-  "/walikelas/[kelas]": "pages/walikelas/[kelas].js",
-  "/login": "pages/login.js"
+  "/admin": "pages/admin.js"
 }
