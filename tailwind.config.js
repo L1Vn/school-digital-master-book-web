@@ -4,12 +4,16 @@ module.exports = {
     "./app/**/*.{js,ts,jsx,tsx}",       // untuk App Router
     "./pages/**/*.{js,ts,jsx,tsx}",     // untuk Pages Router
     "./components/**/*.{js,ts,jsx,tsx}",
-    "./styles/**/*.{css}"                // wajib agar globals.css terbaca
+    "./styles/**/*.css"                // wajib agar globals.css terbaca
   ],
   theme: {
     extend: {
       colors: {
-        primary: "#5B4BFF",
+        primary: {
+          DEFAULT: "#5B4BFF",
+          500: "#5B4BFF",
+          600: "#4839cc",
+        },
         lightbg: "#F3F7FF",
         card: "#FFFFFF"
       },

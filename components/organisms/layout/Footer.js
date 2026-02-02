@@ -10,8 +10,8 @@ export default function Footer() {
         shadow-inner
       "
     >
-      <p className="text-gray-700 text-sm">
-        Dibuat oleh <b>Alief</b> dan <b>Farhan</b>
+      <p className="text-gray-500 text-sm">
+        © 2026 Buku Induk Digital Sekolah. All rights reserved.
       </p>
     </footer>
   );
