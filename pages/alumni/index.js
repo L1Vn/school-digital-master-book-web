@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Header from "../../components/Header";
+import Header from "../../components/organisms/layout/Header";
 
 export default function AlumniPage() {
   const [step, setStep] = useState("login"); // login | edit
@@ -13,9 +13,7 @@ export default function AlumniPage() {
 
   const [form, setForm] = useState({});
 
-  // ================================
   // LOAD DATA SISWA
-  // ================================
   useEffect(() => {
     const saved = localStorage.getItem("students_data");
     if (saved) {
@@ -24,9 +22,7 @@ export default function AlumniPage() {
     }
   }, []);
 
-  // ================================
   // LOGIN ALUMNI
-  // ================================
   function handleLogin() {
     const found = students.find(
       (s) =>
@@ -48,9 +44,7 @@ export default function AlumniPage() {
     setStep("edit");
   }
 
-  // ================================
   // UPDATE DATA ALUMNI
-  // ================================
   function handleSave() {
     const updatedList = students.map((s) =>
       s.nis === alumni.nis ? form : s
@@ -62,9 +56,7 @@ export default function AlumniPage() {
     alert("Data alumni berhasil diperbarui!");
   }
 
-  // ================================
   // LOGOUT
-  // ================================
   function handleLogout() {
     localStorage.removeItem("logged_in");
     localStorage.removeItem("alumni_name");
@@ -72,9 +64,7 @@ export default function AlumniPage() {
     setAlumni(null);
   }
 
-  // ================================
-  // LOGIN VIEW
-  // ================================
+  // TAMPILAN LOGIN
   if (step === "login") {
     return (
       <div className="min-h-screen bg-gray-100">
@@ -116,9 +106,7 @@ export default function AlumniPage() {
     );
   }
 
-  // ================================
-  // EDIT VIEW (SETELAH LOGIN)
-  // ================================
+  // TAMPILAN EDIT (SETELAH LOGIN)
   return (
     <div className="min-h-screen bg-gray-100 pb-20">
       <Header />

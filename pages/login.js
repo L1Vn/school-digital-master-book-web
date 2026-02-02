@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { useAuth } from "../hooks/useAuth";
 
-const API_URL = "https://school-digital-master-book-api-production.up.railway.app";
+const API_URL = "http://localhost:8000";
 
 export default function Login() {
   const router = useRouter();
@@ -10,64 +11,30 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // =========================
   // AUTO CEK LOGIN
-  // =========================
+  // Gunakan hook useAuth
+  const { login, isAuthenticated, user } = useAuth();
+  // Redirect jika sudah login
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    async function checkLogin() {
-      try {
-        const res = await fetch(`${API_URL}/api/current-user`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) throw new Error("Token invalid");
-
-        const user = await res.json();
-        redirectByRole(user);
-      } catch {
-        localStorage.clear();
-      }
+    if (isAuthenticated && user) {
+      redirectByRole(user);
     }
+  }, [isAuthenticated, user]);
 
-    checkLogin();
-  }, []);
-
-  // =========================
-  // HANDLE LOGIN
-  // =========================
   async function handleLogin(e) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    try {
-      const res = await fetch(`${API_URL}/api/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+    const result = await login(form.email, form.password);
 
-      if (!res.ok) throw new Error("Email atau password salah");
-
-      const data = await res.json();
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      redirectByRole(data.user);
-    } catch (err) {
-      setError(err.message || "Terjadi kesalahan");
-    } finally {
-      setLoading(false);
+    if (!result.success) {
+      setError(result.error);
     }
+    setLoading(false);
   }
 
-  // =========================
   // REDIRECT BERDASARKAN ROLE
-  // =========================
   function redirectByRole(user) {
     switch (user.role) {
       case "admin":
@@ -75,15 +42,15 @@ export default function Login() {
         break;
 
       case "guru":
-        router.replace(`/guru/${user.mapel}`);
+        router.replace("/guru");
         break;
 
-      case "walikelas":
-        router.replace(`/walikelas/${user.kelas}`);
+      case "wali_kelas":
+        router.replace("/walikelas");
         break;
 
       case "alumni":
-        router.replace(`/alumni/${user.nisn}`);
+        router.replace("/alumni/profile");
         break;
 
       default:
@@ -91,9 +58,7 @@ export default function Login() {
     }
   }
 
-  // =========================
   // UI
-  // =========================
   return (
     <div className="flex justify-center items-center min-h-screen bg-[#EEF2FF]">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm">

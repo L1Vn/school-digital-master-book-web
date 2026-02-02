@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import Header from "../../components/Header";
+import Header from "../../components/organisms/layout/Header";
 
 function normalizeClass(kelas) {
   return kelas?.toLowerCase().replace(/[^a-z0-9]/g, "");
