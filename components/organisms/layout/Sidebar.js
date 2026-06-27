@@ -30,8 +30,7 @@ export default function Sidebar({ items, isOpen, onClose }) {
               href="/"
               className="flex items-center gap-2 font-bold text-xl text-primary"
             >
-              <span>📚</span>
-              <span>Buku Induk Digital Sekolah</span>
+              <img src="/jejakedu.png" alt="JejakEdu Logo" className="h-30 w-auto object-contain" />
             </Link>
             <button
               onClick={onClose}

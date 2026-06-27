@@ -11,7 +11,7 @@ export default function Footer() {
       "
     >
       <p className="text-gray-500 text-sm">
-        © 2026 Buku Induk Digital Sekolah. All rights reserved.
+        © 2026 JejakEdu. All rights reserved.
       </p>
     </footer>
   );

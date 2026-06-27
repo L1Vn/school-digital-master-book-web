@@ -52,17 +52,7 @@ export default function Header() {
             href={getDashboardLink()}
             className="flex items-center gap-3 group"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-xl shadow-lg group-hover:shadow-glow transition-shadow">
-              📘
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors">
-                Buku Induk Digital Sekolah
-              </h1>
-              <p className="text-xs text-gray-500">
-                Sistem Manajemen Data Siswa
-              </p>
-            </div>
+            <img src="/jejakedu.png" alt="JejakEdu Logo" className="h-20 w-auto object-contain drop-shadow-md group-hover:drop-shadow-xl transition-shadow" />
           </Link>
 
           {/* Right Side */}

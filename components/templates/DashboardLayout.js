@@ -60,8 +60,9 @@ export default function DashboardLayout({ children }) {
       <div className="md:ml-64 min-h-screen flex flex-col transition-all duration-300">
         {/* Mobile Header Toggle */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30 md:hidden px-4 py-3 flex items-center justify-between">
-          <div className="font-bold text-lg text-primary">
-            Buku Induk Digital Sekolah
+          <div className="font-bold text-lg text-primary flex items-center gap-2">
+            <img src="/jejakedu.png" alt="JejakEdu Logo" className="w-6 h-6 object-contain" />
+            JejakEdu
           </div>
           <button
             onClick={() => setIsSidebarOpen(true)}
