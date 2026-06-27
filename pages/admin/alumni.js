@@ -7,6 +7,17 @@ import ErrorMessage from "../../components/atoms/ErrorMessage";
 import * as api from "../../lib/api";
 import DeleteConfirmationModal from "../../components/organisms/modals/DeleteConfirmationModal";
 import toast from "react-hot-toast";
+import Pagination from "../../components/molecules/Pagination";
+
+const sanitizeUrl = (url) => {
+  if (!url) return "#";
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.startsWith("javascript:") || lowerUrl.startsWith("data:")) return "#";
+  if (!lowerUrl.startsWith("http://") && !lowerUrl.startsWith("https://")) {
+    return `https://${url}`;
+  }
+  return url;
+};
 
 export default function AdminAlumniPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -24,6 +35,12 @@ export default function AdminAlumniPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentAlumni, setCurrentAlumni] = useState(null);
   const [alumniToDelete, setAlumniToDelete] = useState(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
 
   // State form
   const [formData, setFormData] = useState({
@@ -56,16 +73,28 @@ export default function AdminAlumniPage() {
   // Load data alumni
   useEffect(() => {
     if (isAdmin) {
-      loadAlumni();
+      const delayDebounceFn = setTimeout(() => {
+        loadAlumni();
+      }, 500); // 500ms debounce for search
+
+      return () => clearTimeout(delayDebounceFn);
     }
-  }, [isAdmin]);
+  }, [isAdmin, currentPage, search, yearFilter]);
 
   async function loadAlumni() {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getAlumni();
-      setAlumni(response.data || []);
+      const response = await api.getAlumni({ 
+        page: currentPage, 
+        per_page: itemsPerPage,
+        search,
+        graduation_year: yearFilter 
+      });
+      const responseData = response.data?.data ? response.data : response;
+      setAlumni(responseData.data || []);
+      setTotalPages(responseData.last_page || 1);
+      setTotalItems(responseData.total || 0);
     } catch (err) {
       console.error("Error loading alumni:", err);
       setError(err.message || "Gagal memuat data alumni");
@@ -75,26 +104,7 @@ export default function AdminAlumniPage() {
     }
   }
 
-  function openAddModal() {
-    setModalMode("add");
-    setFormData({
-      nim: "",
-      name: "",
-      graduation_year: new Date().getFullYear(),
-      university: "",
-      job_title: "",
-      job_start: "",
-      job_end: "",
-      phone: "",
-      email: "",
-      linkedin: "",
-      instagram: "",
-      facebook: "",
-      website: "",
-      nis: "",
-    });
-    setShowModal(true);
-  }
+  // openAddModal removed as alumni are only added via student status change
 
   function openEditModal(alumniData) {
     setModalMode("edit");
@@ -122,13 +132,8 @@ export default function AdminAlumniPage() {
     e.preventDefault();
 
     try {
-      if (modalMode === "add") {
-        await api.createAlumni(formData);
-        toast.success("Alumni berhasil ditambahkan");
-      } else {
-        await api.updateAlumni(currentAlumni.nim, formData);
-        toast.success("Data alumni berhasil diperbarui");
-      }
+      await api.updateAlumni(currentAlumni.nim, formData);
+      toast.success("Data alumni berhasil diperbarui");
       setShowModal(false);
       loadAlumni();
     } catch (err) {
@@ -157,25 +162,12 @@ export default function AdminAlumniPage() {
     }
   }
 
-  // Dapatkan tahun lulus unik untuk filter
-  const graduationYears = [...new Set(alumni.map((a) => a.graduation_year))].sort(
-    (a, b) => b - a
-  );
+  // Dapatkan tahun lulus unik untuk filter (2000 - Current Year)
+  const currentYear = new Date().getFullYear();
+  const graduationYears = Array.from(new Array(currentYear - 1999), (val, index) => currentYear - index);
 
-  // Filter alumni
-  const filteredAlumni = alumni.filter((a) => {
-    const searchLower = search.toLowerCase().trim();
-    const matchSearch =
-      !searchLower ||
-      a.nim?.toLowerCase().includes(searchLower) ||
-      a.name?.toLowerCase().includes(searchLower) ||
-      a.university?.toLowerCase().includes(searchLower) ||
-      a.job_title?.toLowerCase().includes(searchLower);
-
-    const matchYear = !yearFilter || a.graduation_year == yearFilter;
-
-    return matchSearch && matchYear;
-  });
+  // Filter dihapus karena sudah di-handle oleh backend
+  const filteredAlumni = alumni;
 
   if (authLoading || !isAdmin) {
     return <Loading />;
@@ -197,25 +189,10 @@ export default function AdminAlumniPage() {
           <div className="flex items-center gap-4">
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white px-6 py-3 rounded-xl">
               <p className="text-sm opacity-90">Total Alumni</p>
-              <p className="text-3xl font-bold">{alumni.length}</p>
+              <p className="text-3xl font-bold">{totalItems}</p>
             </div>
-            {yearFilter && (
-              <div className="bg-blue-50 px-4 py-2 rounded-lg">
-                <p className="text-sm text-blue-600">Tahun {yearFilter}</p>
-                <p className="text-xl font-bold text-blue-700">
-                  {filteredAlumni.length} Alumni
-                </p>
-              </div>
-            )}
+            {/* Removed the local filtered result count since backend returns total items accurately */}
           </div>
-
-          <button
-            onClick={openAddModal}
-            className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition flex items-center gap-2"
-          >
-            <span className="text-xl">+</span>
-            Tambah Alumni
-          </button>
         </div>
 
         {/* Filters */}
@@ -226,7 +203,10 @@ export default function AdminAlumniPage() {
               type="text"
               placeholder="🔍 Cari NIM, nama, universitas, pekerjaan..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
@@ -234,7 +214,10 @@ export default function AdminAlumniPage() {
           {/* Year Filter */}
           <select
             value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
+            onChange={(e) => {
+              setYearFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">📅 Semua Tahun Lulus</option>
@@ -261,13 +244,14 @@ export default function AdminAlumniPage() {
           <p className="text-gray-600 mb-6">
             {search || yearFilter
               ? "Coba ubah filter atau kata kunci pencarian"
-              : "Mulai tambahkan data alumni dengan klik tombol di atas"}
+              : "Belum ada data alumni yang lulus dari sekolah ini"}
           </p>
           {(search || yearFilter) && (
             <button
               onClick={() => {
                 setSearch("");
                 setYearFilter("");
+                setCurrentPage(1);
               }}
               className="px-4 py-2 text-primary font-semibold hover:bg-primary/10 rounded-lg transition"
             >
@@ -276,141 +260,85 @@ export default function AdminAlumniPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAlumni.map((alumniData) => (
-            <div
-              key={alumniData.nim}
-              className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100 hover:shadow-lg transition-all hover:scale-[1.02]"
-            >
-              <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4">
-                <div className="flex justify-between items-start">
-                  <div className="text-white">
-                    <p className="text-sm opacity-90">NIM</p>
-                    <p className="text-lg font-bold">{alumniData.nim}</p>
-                  </div>
-                  <span className="bg-white/30 backdrop-blur-sm px-3 py-1 rounded-lg text-white text-sm font-semibold">
-                    {alumniData.graduation_year}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-5">
-                <h3 className="font-bold text-xl text-gray-900 mb-3">
-                  {alumniData.name}
-                </h3>
-
-                {alumniData.university && (
-                  <div className="flex items-start gap-2 mb-2">
-                    <span className="text-lg">🎓</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-600">Universitas</p>
-                      <p className="font-semibold text-gray-900 break-words">
-                        {alumniData.university}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {alumniData.job_title && (
-                  <div className="flex items-start gap-2 mb-2">
-                    <span className="text-lg">💼</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-600">Pekerjaan</p>
-                      <p className="font-semibold text-gray-900 break-words">
-                        {alumniData.job_title}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {alumniData.phone && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span>📱</span>
-                    <span className="text-sm text-gray-700">{alumniData.phone}</span>
-                  </div>
-                )}
-
-                {alumniData.email && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <span>📧</span>
-                    <span className="text-sm text-gray-700 break-all">
-                      {alumniData.email}
-                    </span>
-                  </div>
-                )}
-
-                {/* Social Media Links */}
-                {(alumniData.linkedin ||
-                  alumniData.instagram ||
-                  alumniData.facebook ||
-                  alumniData.website) && (
-                  <div className="flex gap-2 mb-4 pt-3 border-t border-gray-100">
-                    {alumniData.linkedin && (
-                      <a
-                        href={alumniData.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
-                        title="LinkedIn"
-                      >
-                        💼
-                      </a>
-                    )}
-                    {alumniData.instagram && (
-                      <a
-                        href={alumniData.instagram}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200 transition"
-                        title="Instagram"
-                      >
-                        📷
-                      </a>
-                    )}
-                    {alumniData.facebook && (
-                      <a
-                        href={alumniData.facebook}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition"
-                        title="Facebook"
-                      >
-                        👥
-                      </a>
-                    )}
-                    {alumniData.website && (
-                      <a
-                        href={alumniData.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-                        title="Website"
-                      >
-                        🌐
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex gap-2 pt-3 border-t border-gray-100">
-                  <button
-                    onClick={() => openEditModal(alumniData)}
-                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+        <div className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="p-4 font-semibold text-gray-600">NIM</th>
+                  <th className="p-4 font-semibold text-gray-600">Nama Lengkap</th>
+                  <th className="p-4 font-semibold text-gray-600">Tahun Lulus</th>
+                  <th className="p-4 font-semibold text-gray-600">Universitas/Kerja</th>
+                  <th className="p-4 font-semibold text-gray-600 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAlumni.map((alumniData, index) => (
+                  <tr
+                    key={alumniData.nim}
+                    className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                    }`}
                   >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(alumniData)}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+                    <td className="p-4 text-gray-900 font-medium">
+                      {alumniData.nim}
+                    </td>
+                    <td className="p-4 text-gray-900 font-medium">
+                      {alumniData.name}
+                    </td>
+                    <td className="p-4 text-gray-900">
+                      {alumniData.graduation_year}
+                    </td>
+                    <td className="p-4">
+                      {alumniData.university && (
+                        <div className="text-sm text-gray-600">
+                          🎓 {alumniData.university}
+                        </div>
+                      )}
+                      {alumniData.job_title && (
+                        <div className="text-sm text-gray-600">
+                          💼 {alumniData.job_title}
+                        </div>
+                      )}
+                      {!alumniData.university && !alumniData.job_title && (
+                        <span className="text-gray-400 italic text-sm">-</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => openEditModal(alumniData)}
+                          className="px-3 py-1.5 bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                          title="Edit"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(alumniData)}
+                          className="px-3 py-1.5 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                          title="Hapus"
+                        >
+                          🗑️ Hapus
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+      )}
+
+      {/* Pagination Component */}
+      {!loading && !error && filteredAlumni.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       {/* Modal */}
@@ -420,7 +348,7 @@ export default function AdminAlumniPage() {
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {modalMode === "add" ? "Tambah Alumni Baru" : "Edit Data Alumni"}
+                  Edit Data Alumni
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -670,7 +598,7 @@ export default function AdminAlumniPage() {
                   type="submit"
                   className="flex-1 px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition"
                 >
-                  {modalMode === "add" ? "Tambah Alumni" : "Simpan Perubahan"}
+                  Simpan Perubahan
                 </button>
               </div>
             </form>

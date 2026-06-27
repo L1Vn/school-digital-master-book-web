@@ -647,36 +647,59 @@ export default function AdminGradesPage() {
                               <p className="text-xs text-red-400 mt-1">Key: {summaryKey}</p>
                            </div>
                         ) : (
-                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6">
+                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 shadow-sm">
                             <h4 className="text-lg font-bold text-gray-900 mb-4 flex justify-between items-center">
                               <span>📊 Ringkasan Nilai</span>
-                              <span className="text-xs font-normal text-gray-500 bg-white/50 px-2 py-1 rounded">Sem: {activeSemester}</span>
+                              <div className="flex gap-2">
+                                {summary.class_name && (
+                                  <span className="text-xs font-semibold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full">Kelas: {summary.class_name}</span>
+                                )}
+                                <span className="text-xs font-medium text-gray-600 bg-white px-3 py-1 rounded-full shadow-sm">Sem: {activeSemester}</span>
+                              </div>
                             </h4>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <p className="text-sm text-gray-600 mb-1">Total Nilai</p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                <p className="text-sm text-gray-500 font-medium mb-1">Total Nilai</p>
                                 <p className="text-2xl font-bold text-indigo-600">{summary.total_score}</p>
                               </div>
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <p className="text-sm text-gray-600 mb-1">Rata-rata</p>
+                              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                <p className="text-sm text-gray-500 font-medium mb-1">Rata-rata</p>
                                 <p className="text-2xl font-bold text-indigo-600">{summary.average_score}</p>
                               </div>
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <p className="text-sm text-gray-600 mb-1">GPA</p>
-                                <p className="text-2xl font-bold text-indigo-600">{summary.grade_point_average || "-"}</p>
+                              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                <p className="text-sm text-gray-500 font-medium mb-1">Nilai Tertinggi</p>
+                                <div className="flex items-end gap-2">
+                                    <p className="text-2xl font-bold text-green-600">{summary.highest_score || 0}</p>
+                                    <p className="text-xs text-gray-400 mb-1 truncate max-w-[80px]" title={summary.highest_subject || '-'}>{summary.highest_subject || '-'}</p>
+                                </div>
                               </div>
-                              <div className="bg-white rounded-lg p-4 shadow-sm">
-                                <p className="text-sm text-gray-600 mb-1">Status</p>
-                                <p className={`text-lg font-bold ${summary.status === 'Lulus' ? 'text-green-600' : 'text-red-600'}`}>
-                                  {summary.status || "-"}
-                                </p>
+                              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                <p className="text-sm text-gray-500 font-medium mb-1">Nilai Terendah</p>
+                                <div className="flex items-end gap-2">
+                                    <p className="text-2xl font-bold text-red-500">{summary.lowest_score || 0}</p>
+                                    <p className="text-xs text-gray-400 mb-1 truncate max-w-[80px]" title={summary.lowest_subject || '-'}>{summary.lowest_subject || '-'}</p>
+                                </div>
                               </div>
                             </div>
-                            {summary.calculated_at && (
-                                <p className="text-xs text-gray-500 mt-3">
-                                Terakhir dihitung: {new Date(summary.calculated_at).toLocaleString('id-ID')}
-                                </p>
-                            )}
+                            <div className="flex justify-between items-center border-t border-indigo-100 pt-3">
+                              <div className="flex gap-4">
+                                <div>
+                                  <span className="text-sm text-gray-500 mr-2">GPA:</span>
+                                  <span className="font-bold text-gray-800">{summary.grade_point_average || "-"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-sm text-gray-500 mr-2">Status:</span>
+                                  <span className={`font-bold ${summary.status === 'Lulus' ? 'text-green-600' : 'text-red-600'}`}>
+                                    {summary.status || "-"}
+                                  </span>
+                                </div>
+                              </div>
+                              {summary.calculated_at && (
+                                  <p className="text-xs text-gray-400">
+                                  Diperbarui: {new Date(summary.calculated_at).toLocaleString('id-ID')}
+                                  </p>
+                              )}
+                            </div>
                         </div>
                         )
                       ) : (

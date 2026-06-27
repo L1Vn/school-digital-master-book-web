@@ -7,8 +7,10 @@ import ErrorMessage from "../../components/atoms/ErrorMessage";
 import AddStudentModal from "../../components/organisms/modals/AddStudentModal";
 import EditStudentModal from "../../components/organisms/modals/EditStudentModal";
 import DeleteConfirmationModal from "../../components/organisms/modals/DeleteConfirmationModal";
-import { getStudents, deleteStudent } from "../../lib/api";
+import { getStudents, deleteStudent, createStudent, updateStudent } from "../../lib/api";
 import toast from "react-hot-toast";
+import Pagination from "../../components/molecules/Pagination";
+import { useClasses } from "../../hooks/useClasses";
 
 export default function AdminStudentsPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -28,6 +30,15 @@ export default function AdminStudentsPage() {
   const [currentStudent, setCurrentStudent] = useState(null);
   const [studentToDelete, setStudentToDelete] = useState(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
+
+  // Classes hook for dropdown
+  const { classes } = useClasses(isAdmin);
+
   // Cek otorisasi
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -41,16 +52,30 @@ export default function AdminStudentsPage() {
   // Load data siswa
   useEffect(() => {
     if (isAdmin) {
-      loadStudents();
+      const delayDebounceFn = setTimeout(() => {
+        loadStudents();
+      }, 500); // 500ms debounce for search
+
+      return () => clearTimeout(delayDebounceFn);
     }
-  }, [isAdmin]);
+  }, [isAdmin, currentPage, search, genderFilter, classFilter]);
 
   async function loadStudents() {
     try {
       setLoading(true);
       setError(null);
-      const data = await getStudents({ per_page: 1000 });
-      setStudents(data.data || []);
+      const data = await getStudents({ 
+        page: currentPage, 
+        per_page: itemsPerPage,
+        search,
+        gender: genderFilter,
+        class: classFilter
+      });
+      
+      const responseData = data.data?.data ? data.data : data;
+      setStudents(responseData.data || []);
+      setTotalPages(responseData.last_page || 1);
+      setTotalItems(responseData.total || 0);
     } catch (err) {
       setError(err.response?.data?.message || "Gagal memuat data siswa");
     } finally {
@@ -63,15 +88,24 @@ export default function AdminStudentsPage() {
     setShowEditModal(true);
   }
 
-  function handleStudentAdded(newStudent) {
-    loadStudents();
-    setShowAddModal(false);
+  async function handleAddStudent(data) {
+    try {
+      await createStudent(data);
+      toast.success("Siswa berhasil ditambahkan");
+      loadStudents();
+    } catch (err) {
+      throw new Error(err.response?.data?.message || "Gagal menambahkan siswa");
+    }
   }
 
-  function handleStudentUpdated(updatedStudent) {
-    loadStudents();
-    setShowEditModal(false);
-    setCurrentStudent(null);
+  async function handleEditStudent(data) {
+    try {
+      await updateStudent(data.nis, data);
+      toast.success("Siswa berhasil diperbarui");
+      loadStudents();
+    } catch (err) {
+      throw new Error(err.response?.data?.message || "Gagal memperbarui siswa");
+    }
   }
 
   function handleDelete(student) {
@@ -93,33 +127,8 @@ export default function AdminStudentsPage() {
     }
   }
 
-  // Dapatkan kelas unik untuk filter
-  const classes = [
-    ...new Set(
-      students
-        .map((s) => s.rombel_absen?.split("-")[0])
-        .filter(Boolean)
-        .sort()
-    ),
-  ];
-
-  // Filter siswa
-  const filteredStudents = students.filter((s) => {
-    const q = search.toLowerCase().trim();
-    const matchSearch =
-      !q ||
-      s.nis?.toLowerCase().includes(q) ||
-      s.nisn?.toLowerCase().includes(q) ||
-      s.name?.toLowerCase().includes(q) ||
-      s.rombel_absen?.toLowerCase().includes(q);
-
-    const matchGender = !genderFilter || s.gender === genderFilter;
-
-    const matchClass =
-      !classFilter || s.rombel_absen?.startsWith(classFilter + "-");
-
-    return matchSearch && matchGender && matchClass;
-  });
+  // Filter dihapus karena sudah di-handle oleh backend melalui getStudents()
+  const filteredStudents = students;
 
   if (authLoading || !isAdmin) {
     return <Loading />;
@@ -141,16 +150,9 @@ export default function AdminStudentsPage() {
           <div className="flex items-center gap-4">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl">
               <p className="text-sm opacity-90">Total Siswa</p>
-              <p className="text-3xl font-bold">{students.length}</p>
+              <p className="text-3xl font-bold">{totalItems}</p>
             </div>
-            {(search || genderFilter || classFilter) && (
-              <div className="bg-blue-50 px-4 py-2 rounded-lg">
-                <p className="text-sm text-blue-600">Hasil Filter</p>
-                <p className="text-xl font-bold text-blue-700">
-                  {filteredStudents.length} Siswa
-                </p>
-              </div>
-            )}
+            {/* Removed the local filtered result count since backend returns total items accurately */}
           </div>
 
           <button
@@ -170,7 +172,10 @@ export default function AdminStudentsPage() {
               type="text"
               placeholder="🔍 Cari NIS, NISN, nama, kelas..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
@@ -178,7 +183,10 @@ export default function AdminStudentsPage() {
           {/* Gender Filter */}
           <select
             value={genderFilter}
-            onChange={(e) => setGenderFilter(e.target.value)}
+            onChange={(e) => {
+              setGenderFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">👥 Semua Jenis Kelamin</option>
@@ -189,7 +197,10 @@ export default function AdminStudentsPage() {
           {/* Class Filter */}
           <select
             value={classFilter}
-            onChange={(e) => setClassFilter(e.target.value)}
+            onChange={(e) => {
+              setClassFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">🏫 Semua Kelas</option>
@@ -209,6 +220,7 @@ export default function AdminStudentsPage() {
                 setSearch("");
                 setGenderFilter("");
                 setClassFilter("");
+                setCurrentPage(1);
               }}
               className="text-sm text-primary hover:text-primary-dark font-semibold"
             >
@@ -242,6 +254,7 @@ export default function AdminStudentsPage() {
                 setSearch("");
                 setGenderFilter("");
                 setClassFilter("");
+                setCurrentPage(1);
               }}
               className="px-4 py-2 text-primary font-semibold hover:bg-primary/10 rounded-lg transition"
             >
@@ -250,117 +263,97 @@ export default function AdminStudentsPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStudents.map((student) => (
-            <div
-              key={student.nis}
-              className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100 hover:shadow-lg transition-all hover:scale-[1.02]"
-            >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
-                <div className="flex justify-between items-start">
-                  <div className="text-white">
-                    <p className="text-sm opacity-90">NIS</p>
-                    <p className="text-lg font-bold">{student.nis}</p>
-                  </div>
-                  <div className="flex gap-1">
-                    {student.gender === "Laki-laki" && (
-                      <span className="bg-white/30 backdrop-blur-sm px-2 py-1 rounded-lg text-white text-sm">
-                        🚹
-                      </span>
-                    )}
-                    {student.gender === "Perempuan" && (
-                      <span className="bg-white/30 backdrop-blur-sm px-2 py-1 rounded-lg text-white text-sm">
-                        🚺
-                      </span>
-                    )}
-                    {student.rombel_absen && (
-                      <span className="bg-white/30 backdrop-blur-sm px-2 py-1 rounded-lg text-white text-xs font-semibold">
-                        {student.rombel_absen}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Body */}
-              <div className="p-5">
-                <h3 className="font-bold text-xl text-gray-900 mb-3">
-                  {student.name}
-                </h3>
-
-                <div className="space-y-2 text-sm">
-                  {student.nisn && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500 w-24">NISN:</span>
-                      <span className="font-semibold text-gray-900">
-                        {student.nisn}
-                      </span>
-                    </div>
-                  )}
-
-                  {student.birth_place && student.birth_date && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-500 w-24">TTL:</span>
-                      <span className="text-gray-900 flex-1">
-                        {student.birth_place},{" "}
-                        {new Date(student.birth_date).toLocaleDateString(
-                          "id-ID",
-                          {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          }
-                        )}
-                      </span>
-                    </div>
-                  )}
-
-                  {student.religion && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500 w-24">Agama:</span>
-                      <span className="text-gray-900">{student.religion}</span>
-                    </div>
-                  )}
-
-                  {student.father_name && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-500 w-24">Nama Ayah:</span>
-                      <span className="text-gray-900 flex-1">
-                        {student.father_name}
-                      </span>
-                    </div>
-                  )}
-
-                  {student.address && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-500 w-24">Alamat:</span>
-                      <span className="text-gray-900 flex-1 break-words">
-                        {student.address}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                  <button
-                    onClick={() => openEditModal(student)}
-                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition text-sm"
+        <div className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="p-4 font-semibold text-gray-600">NIS</th>
+                  <th className="p-4 font-semibold text-gray-600">Nama Lengkap</th>
+                  <th className="p-4 font-semibold text-gray-600">Kelas</th>
+                  <th className="p-4 font-semibold text-gray-600">Jenis Kelamin</th>
+                  <th className="p-4 font-semibold text-gray-600">Status</th>
+                  <th className="p-4 font-semibold text-gray-600 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStudents.map((student, index) => (
+                  <tr
+                    key={student.nis}
+                    className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                    }`}
                   >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(student)}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition text-sm"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+                    <td className="p-4 text-gray-900 font-medium">
+                      {student.nis}
+                    </td>
+                    <td className="p-4 text-gray-900 font-medium">
+                      {student.name}
+                    </td>
+                    <td className="p-4">
+                      {student.rombel_absen ? (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium">
+                          {student.rombel_absen}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 italic text-sm">-</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {student.gender === "L" || student.gender === "Laki-laki" ? (
+                        <span className="text-blue-600">🚹 Laki-laki</span>
+                      ) : student.gender === "P" || student.gender === "Perempuan" ? (
+                        <span className="text-pink-600">🚺 Perempuan</span>
+                      ) : (
+                        <span className="text-gray-400 italic text-sm">-</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {student.status === "alumni" ? (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded-md text-sm font-medium flex inline-flex items-center gap-1">
+                          🎓 Alumni
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium flex inline-flex items-center gap-1">
+                          📚 Siswa Aktif
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => openEditModal(student)}
+                          className="px-3 py-1.5 bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                          title="Edit"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(student)}
+                          className="px-3 py-1.5 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                          title="Hapus"
+                        >
+                          🗑️ Hapus
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+      )}
+
+      {/* Pagination Component */}
+      {!loading && !error && filteredStudents.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       {/* Modals */}
@@ -368,7 +361,8 @@ export default function AdminStudentsPage() {
         <AddStudentModal
           open={true}
           onClose={() => setShowAddModal(false)}
-          onSuccess={handleStudentAdded}
+          onSave={handleAddStudent}
+          students={students}
         />
       )}
 
@@ -380,7 +374,7 @@ export default function AdminStudentsPage() {
             setShowEditModal(false);
             setCurrentStudent(null);
           }}
-          onSuccess={handleStudentUpdated}
+          onSave={handleEditStudent}
         />
       )}
 

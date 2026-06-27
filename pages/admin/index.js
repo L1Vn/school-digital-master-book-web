@@ -149,10 +149,10 @@ export default function AdminDashboard() {
         ]);
 
       setStats({
-        students: studentsRes.data?.length || 0,
-        alumni: alumniRes.data?.length || 0,
-        subjects: subjectsRes.data?.length || 0,
-        users: usersRes.data?.length || 0,
+        students: studentsRes.total || studentsRes.data?.length || 0,
+        alumni: alumniRes.total || alumniRes.data?.length || 0,
+        subjects: subjectsRes.total || subjectsRes.data?.length || 0,
+        users: usersRes.total || usersRes.data?.length || 0,
         unreadNotifications: notifCountRes.data?.unread_count || 0,
       });
 

@@ -6,6 +6,7 @@ import Loading from "../../components/atoms/Loading";
 import ErrorMessage from "../../components/atoms/ErrorMessage";
 import * as api from "../../lib/api";
 import toast from "react-hot-toast";
+import Swal from 'sweetalert2';
 
 export default function AdminNotificationsPage() {
   const { user, isAdmin, isLoading } = useAuth();
@@ -78,7 +79,15 @@ export default function AdminNotificationsPage() {
   }
 
   async function handleMarkAllAsRead() {
-    if (!confirm("Tandai semua notifikasi sebagai sudah dibaca?")) return;
+    const result = await Swal.fire({
+      title: 'Konfirmasi',
+      text: "Tandai semua notifikasi sebagai sudah dibaca?",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Ya',
+      cancelButtonText: 'Batal'
+    });
+    if (!result.isConfirmed) return;
 
     try {
       await api.markAllNotificationsAsRead();
@@ -92,7 +101,16 @@ export default function AdminNotificationsPage() {
   }
 
   async function handleDelete(id) {
-    if (!confirm("Hapus notifikasi ini?")) return;
+    const result = await Swal.fire({
+      title: 'Hapus Notifikasi?',
+      text: "Notifikasi ini akan dihapus permanen.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Hapus',
+      cancelButtonText: 'Batal'
+    });
+    if (!result.isConfirmed) return;
 
     try {
       await api.deleteNotification(id);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Header from "../../components/organisms/layout/Header";
+import Swal from 'sweetalert2';
 
 export default function AlumniDetail() {
   const router = useRouter();
@@ -23,8 +24,13 @@ export default function AlumniDetail() {
     const found = students.find((s) => s.nisn === nisn);
 
     if (!found) {
-      alert("Data alumni tidak ditemukan!");
-      router.replace("/login");
+      Swal.fire({
+        title: "Error",
+        text: "Data alumni tidak ditemukan!",
+        icon: "error"
+      }).then(() => {
+        router.replace("/login");
+      });
       return;
     }
 
@@ -39,7 +45,11 @@ export default function AlumniDetail() {
     );
 
     localStorage.setItem("students_data", JSON.stringify(updated));
-    alert("Data berhasil diperbarui!");
+    Swal.fire({
+      title: "Sukses",
+      text: "Data berhasil diperbarui!",
+      icon: "success"
+    });
   }
 
   if (!form) return <p className="p-10 text-center">Memuat data...</p>;

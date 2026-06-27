@@ -11,6 +11,16 @@ import Badge from "../../components/atoms/Badge";
 import { getMyProfile, updateMyProfile, logout } from "../../lib/api";
 import toast from "react-hot-toast";
 
+const sanitizeUrl = (url) => {
+  if (!url) return "#";
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.startsWith("javascript:") || lowerUrl.startsWith("data:")) return "#";
+  if (!lowerUrl.startsWith("http://") && !lowerUrl.startsWith("https://")) {
+    return `https://${url}`;
+  }
+  return url;
+};
+
 export default function AlumniProfilePage() {
   const { user, isAlumni, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -488,7 +498,7 @@ export default function AlumniProfilePage() {
                       {/* Social Grid items */}
                       {profile.linkedin && (
                         <a
-                          href={profile.linkedin}
+                          href={sanitizeUrl(profile.linkedin)}
                           target="_blank"
                           rel="noreferrer"
                           className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-blue-50 transition-colors border border-gray-100 hover:border-blue-200 group"
@@ -517,7 +527,7 @@ export default function AlumniProfilePage() {
                         return (
                           <a
                             key={social}
-                            href={profile[social]}
+                            href={sanitizeUrl(profile[social])}
                             target="_blank"
                             rel="noreferrer"
                             className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-indigo-50 transition-colors border border-gray-100 hover:border-indigo-200 group"

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import Header from "../../components/organisms/layout/Header";
+import Swal from 'sweetalert2';
 
 export default function AlumniPage() {
   const [step, setStep] = useState("login"); // login | edit
@@ -31,7 +33,11 @@ export default function AlumniPage() {
     );
 
     if (!found) {
-      alert("Data tidak ditemukan! Periksa kembali NIS & tanggal lahir.");
+      Swal.fire({
+        title: "Error",
+        text: "Data tidak ditemukan! Periksa kembali NIS & tanggal lahir.",
+        icon: "error"
+      });
       return;
     }
 
@@ -53,7 +59,11 @@ export default function AlumniPage() {
     setStudents(updatedList);
     localStorage.setItem("students_data", JSON.stringify(updatedList));
 
-    alert("Data alumni berhasil diperbarui!");
+    Swal.fire({
+      title: "Sukses",
+      text: "Data alumni berhasil diperbarui!",
+      icon: "success"
+    });
   }
 
   // LOGOUT

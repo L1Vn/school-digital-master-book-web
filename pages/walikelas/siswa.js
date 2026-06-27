@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Swal from 'sweetalert2';
 import { useRouter } from "next/router";
 import { useAuth } from "../../hooks/useAuth";
 import DashboardLayout from "../../components/templates/DashboardLayout";
@@ -287,7 +288,16 @@ export default function WaliKelasSiswaPage() {
   };
 
   const handleDeleteGrade = async (gradeId) => {
-    if (!confirm("Yakin ingin menghapus nilai ini?")) {
+    const result = await Swal.fire({
+      title: 'Hapus Nilai?',
+      text: "Yakin ingin menghapus nilai ini?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Ya, hapus!',
+      cancelButtonText: 'Batal'
+    });
+    if (!result.isConfirmed) {
       return;
     }
 

@@ -7,6 +7,7 @@ import ErrorMessage from "../../components/atoms/ErrorMessage";
 import * as api from "../../lib/api";
 import DeleteConfirmationModal from "../../components/organisms/modals/DeleteConfirmationModal";
 import toast from "react-hot-toast";
+import Pagination from "../../components/molecules/Pagination";
 
 export default function AdminSubjectsPage() {
   const { user, isAdmin, isLoading } = useAuth();
@@ -24,6 +25,12 @@ export default function AdminSubjectsPage() {
     code: "",
   });
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
+
   useEffect(() => {
     if (!isLoading && !isAdmin) {
       if (user) {
@@ -35,16 +42,27 @@ export default function AdminSubjectsPage() {
 
   useEffect(() => {
     if (isAdmin) {
-      loadSubjects();
+      const delayDebounceFn = setTimeout(() => {
+        loadSubjects();
+      }, 500); // 500ms debounce for search
+
+      return () => clearTimeout(delayDebounceFn);
     }
-  }, [isAdmin]);
+  }, [isAdmin, currentPage, search]);
 
   const loadSubjects = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getSubjects();
-      setSubjects(Array.isArray(response) ? response : response.data || []);
+      const response = await api.getSubjects({
+        page: currentPage,
+        limit: itemsPerPage,
+        search
+      });
+      const responseData = response.data?.data ? response.data : response;
+      setSubjects(Array.isArray(responseData) ? responseData : responseData.data || []);
+      setTotalPages(responseData.last_page || 1);
+      setTotalItems(responseData.total || (Array.isArray(responseData) ? responseData.length : 0));
     } catch (err) {
       console.error("Error loading subjects:", err);
       setError(err.message || "Gagal memuat data mata pelajaran");
@@ -119,14 +137,8 @@ export default function AdminSubjectsPage() {
     }
   };
 
-  // Filter mata pelajaran
-  const filteredSubjects = subjects.filter((s) => {
-    const q = search.toLowerCase().trim();
-    if (!q) return true;
-    return (
-      s.name?.toLowerCase().includes(q) || s.code?.toLowerCase().includes(q)
-    );
-  });
+  // Filter dihapus karena dihandle oleh backend
+  const filteredSubjects = subjects;
 
   if (isLoading || !isAdmin) {
     return <Loading />;
@@ -150,16 +162,9 @@ export default function AdminSubjectsPage() {
           <div className="flex items-center gap-4">
             <div className="bg-gradient-to-br from-green-500 to-green-600 text-white px-6 py-3 rounded-xl">
               <p className="text-sm opacity-90">Total Mata Pelajaran</p>
-              <p className="text-3xl font-bold">{subjects.length}</p>
+              <p className="text-3xl font-bold">{totalItems}</p>
             </div>
-            {search && (
-              <div className="bg-green-50 px-4 py-2 rounded-lg">
-                <p className="text-sm text-green-600">Hasil Pencarian</p>
-                <p className="text-xl font-bold text-green-700">
-                  {filteredSubjects.length} Mapel
-                </p>
-              </div>
-            )}
+            {/* Local filtered result count removed */}
           </div>
 
           <button
@@ -177,7 +182,10 @@ export default function AdminSubjectsPage() {
             type="text"
             placeholder="🔍 Cari nama atau kode mata pelajaran..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
@@ -185,7 +193,10 @@ export default function AdminSubjectsPage() {
         {search && (
           <div className="mt-2">
             <button
-              onClick={() => setSearch("")}
+              onClick={() => {
+                setSearch("");
+                setCurrentPage(1);
+              }}
               className="text-sm text-primary hover:text-primary-dark font-semibold"
             >
               🔄 Reset Pencarian
@@ -290,7 +301,18 @@ export default function AdminSubjectsPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Pagination Component */}
+      {!loading && !error && filteredSubjects.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
+      {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full">

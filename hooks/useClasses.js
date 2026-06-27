@@ -19,7 +19,7 @@ export function useClasses(shouldFetch = true) {
             // Idealnya backend menyediakan endpoint khusus untuk list kelas, tapi kita ikuti pola yang ada
             const res = await api.getStudents({ per_page: 1000, status: 'Aktif' });
             const allStds = res.data?.data || res.data || [];
-            const uniqueClasses = Array.from(new Set(allStds.map(s => s.class || s.kelas).filter(Boolean))).sort();
+            const uniqueClasses = Array.from(new Set(allStds.map(s => s.rombel_absen?.split('-')[0] || s.class || s.kelas).filter(Boolean))).sort();
             setClasses(uniqueClasses);
         } catch (err) {
             console.error("Failed to fetch classes", err);

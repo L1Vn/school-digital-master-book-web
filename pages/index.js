@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "../hooks/useAuth";
 import { publicGetStudents, publicGetAlumni } from "../lib/api";
+import Pagination from "../components/molecules/Pagination";
 // ========================
 // MAIN COMPONENT
 // ========================
@@ -17,64 +18,62 @@ export default function PublicHome() {
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState("students");
 
+  // Pagination states
+  const [studentPage, setStudentPage] = useState(1);
+  const [alumniPage, setAlumniPage] = useState(1);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [totalAlumni, setTotalAlumni] = useState(0);
+  const [studentPages, setStudentPages] = useState(1);
+  const [alumniPages, setAlumniPages] = useState(1);
+  const itemsPerPage = 9;
+
   // Fetch data dari API
   useEffect(() => {
-    async function loadData() {
-      try {
-        setDataLoading(true);
-        setError(null);
+    const delayDebounceFn = setTimeout(() => {
+      loadData();
+    }, 500);
 
-        const [studentsRes, alumniRes] = await Promise.all([
-          publicGetStudents(),
-          publicGetAlumni(),
-        ]);
+    return () => clearTimeout(delayDebounceFn);
+  }, [query, studentPage, alumniPage]);
 
-        // Handle response paginated dari Laravel (data.data.data)
-        // atau response langsung (data.data) atau array langsung
-        const extractData = (res) => {
-          if (Array.isArray(res)) return res;
-          if (Array.isArray(res?.data?.data)) return res.data.data; // Response Paginated
-          if (Array.isArray(res?.data)) return res.data;
-          return [];
-        };
+  async function loadData() {
+    try {
+      setDataLoading(true);
+      setError(null);
 
-        setStudents(extractData(studentsRes));
-        setAlumni(extractData(alumniRes));
-      } catch (err) {
-        console.error("Error loading data:", err);
-        setError("Gagal memuat data. Silakan refresh halaman.");
-      } finally {
-        setDataLoading(false);
-      }
+      const [studentsRes, alumniRes] = await Promise.all([
+        publicGetStudents({ search: query, page: studentPage, per_page: itemsPerPage }),
+        publicGetAlumni({ search: query, page: alumniPage, per_page: itemsPerPage }),
+      ]);
+
+      const processResponse = (res, setList, setTotal, setPages) => {
+        const responseData = res.data?.data ? res.data : res;
+        let items = [];
+        if (responseData?.data) {
+          items = responseData.data;
+          setPages(responseData.last_page || 1);
+          setTotal(responseData.total || 0);
+        } else {
+          items = responseData || [];
+          setPages(1);
+          setTotal(items.length);
+        }
+        setList(items);
+      };
+
+      processResponse(studentsRes, setStudents, setTotalStudents, setStudentPages);
+      processResponse(alumniRes, setAlumni, setTotalAlumni, setAlumniPages);
+    } catch (err) {
+      console.error("Error loading data:", err);
+      setError("Gagal memuat data. Silakan refresh halaman.");
+    } finally {
+      setDataLoading(false);
     }
+  }
 
-    loadData();
-  }, []);
-
-  // Filter berdasarkan search query
-  const filteredStudents = useMemo(() => {
-    const q = query.toLowerCase().trim();
-    if (!q) return students;
-    return students.filter(
-      (s) =>
-        s.nis?.toLowerCase().includes(q) ||
-        s.nisn?.toLowerCase().includes(q) ||
-        s.name?.toLowerCase().includes(q) ||
-        s.rombel_absen?.toLowerCase().includes(q),
-    );
-  }, [query, students]);
-
-  const filteredAlumni = useMemo(() => {
-    const q = query.toLowerCase().trim();
-    if (!q) return alumni;
-    return alumni.filter(
-      (a) =>
-        a.nim?.toLowerCase().includes(q) ||
-        a.name?.toLowerCase().includes(q) ||
-        a.university?.toLowerCase().includes(q) ||
-        a.graduation_year?.toString().includes(q),
-    );
-  }, [query, alumni]);
+  // Filter dihapus karena dihandle oleh backend
+  const filteredStudents = students;
+  const filteredAlumni = alumni;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -86,17 +85,7 @@ export default function PublicHome() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-2xl shadow-lg">
-                📘
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  Buku Induk Digital Sekolah
-                </h1>
-                <p className="text-sm text-gray-500">
-                  Sistem Manajemen Data Siswa
-                </p>
-              </div>
+              <img src="/jejakedu.png" alt="JejakEdu Logo" className="h-20 w-auto object-contain" />
             </div>
 
             {/* Login/User Button */}
@@ -138,10 +127,8 @@ export default function PublicHome() {
       {/* BAGIAN HERO */}
       {/* ======================== */}
       <section className="py-16 px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Buku Induk Digital Sekolah
-          </h2>
+        <div className="max-w-7xl mx-auto text-center flex flex-col items-center">
+          <img src="/jejakedu.png" alt="JejakEdu Logo" className="h-60 w-auto object-contain mb-6" />
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
             Sistem informasi terpusat untuk pengelolaan data siswa dan alumni
             sekolah
@@ -151,7 +138,11 @@ export default function PublicHome() {
           <div className="max-w-xl mx-auto relative">
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setStudentPage(1);
+                setAlumniPage(1);
+              }}
               placeholder="🔍 Cari siswa atau alumni (Nama / NIS / NISN / NIM)..."
               className="w-full px-6 py-4 rounded-2xl border-2 border-gray-200 bg-white shadow-soft focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-lg"
             />
@@ -168,19 +159,19 @@ export default function PublicHome() {
           <StatsCard
             icon="👨‍🎓"
             label="Total Siswa Aktif"
-            value={students.length}
+            value={totalStudents}
             color="bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
           />
           <StatsCard
             icon="🎓"
             label="Total Alumni"
-            value={alumni.length}
+            value={totalAlumni}
             color="bg-gradient-to-br from-amber-400 to-orange-500 text-white"
           />
           <StatsCard
             icon="📊"
             label="Total Data"
-            value={students.length + alumni.length}
+            value={totalStudents + totalAlumni}
             color="bg-gradient-to-br from-emerald-500 to-teal-600 text-white"
           />
         </div>
@@ -213,7 +204,7 @@ export default function PublicHome() {
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                👨‍🎓 Siswa ({filteredStudents.length})
+                👨‍🎓 Siswa ({totalStudents})
               </button>
               <button
                 onClick={() => setActiveTab("alumni")}
@@ -223,7 +214,7 @@ export default function PublicHome() {
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                🎓 Alumni ({filteredAlumni.length})
+                🎓 Alumni ({totalAlumni})
               </button>
             </div>
 
@@ -246,6 +237,18 @@ export default function PublicHome() {
                 )}
               </div>
             )}
+            
+            {activeTab === "students" && filteredStudents.length > 0 && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={studentPage}
+                  totalPages={studentPages}
+                  totalItems={totalStudents}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setStudentPage}
+                />
+              </div>
+            )}
 
             {/* Grid Alumni */}
             {activeTab === "alumni" && (
@@ -260,6 +263,18 @@ export default function PublicHome() {
                       : "Belum ada data alumni"}
                   </div>
                 )}
+              </div>
+            )}
+            
+            {activeTab === "alumni" && filteredAlumni.length > 0 && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={alumniPage}
+                  totalPages={alumniPages}
+                  totalItems={totalAlumni}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setAlumniPage}
+                />
               </div>
             )}
           </>

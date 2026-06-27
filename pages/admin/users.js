@@ -8,6 +8,7 @@ import { ROLES } from "../../lib/constants";
 import * as api from "../../lib/api";
 import DeleteConfirmationModal from "../../components/organisms/modals/DeleteConfirmationModal";
 import toast from "react-hot-toast";
+import Pagination from "../../components/molecules/Pagination";
 
 export default function AdminUsersPage() {
   const { user, isAdmin, isLoading } = useAuth();
@@ -24,6 +25,19 @@ export default function AdminUsersPage() {
   const [userToDelete, setUserToDelete] = useState(null);
   const [roleFilter, setRoleFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [roleCounts, setRoleCounts] = useState({
+    total: 0,
+    admin: 0,
+    guru: 0,
+    wali_kelas: 0,
+    alumni: 0,
+  });
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 15;
   
   const [formData, setFormData] = useState({
     name: "",
@@ -46,9 +60,13 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (isAdmin) {
-      loadData();
+      const delayDebounceFn = setTimeout(() => {
+        loadData();
+      }, 500);
+
+      return () => clearTimeout(delayDebounceFn);
     }
-  }, [isAdmin]);
+  }, [isAdmin, currentPage, search, roleFilter]);
 
   const loadData = async () => {
     try {
@@ -56,12 +74,34 @@ export default function AdminUsersPage() {
       setError(null);
       
       const [usersRes, subjectsRes, alumniRes] = await Promise.all([
-        api.getUsers(),
+        api.getUsers({
+          page: currentPage,
+          per_page: itemsPerPage,
+          search,
+          role: roleFilter,
+        }),
         api.getSubjects(),
         api.getAlumni(),
       ]);
       
-      setUsers(usersRes.data || []);
+      const userDataResponse = usersRes.data?.data ? usersRes.data.data : usersRes.data;
+      // Handle the new nested response structure
+      let actualUsers = [];
+      if (userDataResponse?.data) {
+          actualUsers = userDataResponse.data;
+          setTotalPages(userDataResponse.last_page || 1);
+          setTotalItems(userDataResponse.total || 0);
+      } else {
+          actualUsers = userDataResponse || [];
+          setTotalPages(1);
+          setTotalItems(actualUsers.length);
+      }
+      setUsers(actualUsers);
+      
+      if (usersRes.data?.role_counts) {
+          setRoleCounts(usersRes.data.role_counts);
+      }
+      
       setSubjects(Array.isArray(subjectsRes) ? subjectsRes : subjectsRes.data || []);
       setAlumni(alumniRes.data || []);
     } catch (err) {
@@ -211,24 +251,8 @@ export default function AdminUsersPage() {
     return labels[role] || role;
   };
 
-  // Hitung jumlah role
-  const roleCounts = {
-    total: users.length,
-    admin: users.filter((u) => u.role === ROLES.ADMIN).length,
-    guru: users.filter((u) => u.role === ROLES.GURU).length,
-    wali_kelas: users.filter((u) => u.role === ROLES.WALI_KELAS).length,
-    alumni: users.filter((u) => u.role === ROLES.ALUMNI).length,
-  };
-
-  // Filter users
-  const filteredUsers = users.filter((u) => {
-    const matchRole = !roleFilter || u.role === roleFilter;
-    const matchSearch =
-      !search ||
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase());
-    return matchRole && matchSearch;
-  });
+  // Filter dihapus karena dihandle oleh backend
+  const filteredUsers = users;
 
   if (isLoading || !isAdmin) {
     return <Loading />;
@@ -290,14 +314,20 @@ export default function AdminUsersPage() {
             type="text"
             placeholder="🔍 Cari nama atau email..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           />
 
           {/* Role Filter */}
           <select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
+            onChange={(e) => {
+              setRoleFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">👥 Semua Role</option>
@@ -438,6 +468,17 @@ export default function AdminUsersPage() {
         </div>
       )}
 
+      {/* Pagination Component */}
+      {!loading && !error && filteredUsers.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -537,7 +578,7 @@ export default function AdminUsersPage() {
                     <option value={ROLES.ADMIN}>Admin</option>
                     <option value={ROLES.GURU}>Guru</option>
                     <option value={ROLES.WALI_KELAS}>Wali Kelas</option>
-                    <option value={ROLES.ALUMNI}>Alumni</option>
+                    {editingUser && <option value={ROLES.ALUMNI}>Alumni</option>}
                   </select>
                 </div>
 
