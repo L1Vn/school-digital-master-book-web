@@ -18,7 +18,7 @@ Pastikan Node.js (versi LTS terbaru) telah terinstal di komputer Anda.
 1. **Clone Repository**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/L1Vn/school-digital-master-book-web.git
    cd school-digital-master-book-web
    ```
 
