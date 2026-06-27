@@ -20,7 +20,6 @@ export default function AddStudentModal({
     religion: "Islam",
     father_name: "",
     address: "",
-    ijazah_number: "",
     rombel_absen: "",
   });
   const [loading, setLoading] = useState(false);
@@ -39,7 +38,6 @@ export default function AddStudentModal({
         religion: "Islam",
         father_name: "",
         address: "",
-        ijazah_number: "",
         rombel_absen: "",
       });
       setError("");
@@ -171,22 +169,14 @@ export default function AddStudentModal({
           required
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="No. Ijazah"
-            name="ijazah_number"
-            value={form.ijazah_number}
-            onChange={handleChange}
-          />
-          <Input
-            label="Rombel & Absen *"
-            name="rombel_absen"
-            value={form.rombel_absen}
-            onChange={handleChange}
-            placeholder="Contoh: X-1-01"
-            required
-          />
-        </div>
+        <Input
+          label="Rombel & Absen *"
+          name="rombel_absen"
+          value={form.rombel_absen}
+          onChange={handleChange}
+          placeholder="Contoh: X-1-01"
+          required
+        />
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="secondary" onClick={onClose}>

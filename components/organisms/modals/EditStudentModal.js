@@ -31,19 +31,25 @@ export default function EditStudentModal({
   // Populate form when student changes
   useEffect(() => {
     if (student && open) {
+      // Format birth_date to YYYY-MM-DD for input type date
+      let formattedBirthDate = "";
+      if (student.birth_date) {
+        formattedBirthDate = student.birth_date.split('T')[0];
+      }
+
       setForm({
         nis: student.nis || "",
         nisn: student.nisn || "",
         name: student.name || "",
         gender: student.gender || "L",
         birth_place: student.birth_place || "",
-        birth_date: student.birth_date || "",
+        birth_date: formattedBirthDate,
         religion: student.religion || "Islam",
         father_name: student.father_name || "",
         address: student.address || "",
         ijazah_number: student.ijazah_number || "",
         rombel_absen: student.rombel_absen || "",
-        status: student.status || "siswa",
+        status: student.status || (student.ijazah_number ? "alumni" : "siswa"),
       });
       setError("");
     }
@@ -60,7 +66,11 @@ export default function EditStudentModal({
 
     setLoading(true);
     try {
-      await onSave(form);
+      const dataToSave = { ...form };
+      if (dataToSave.status === 'siswa') {
+        dataToSave.ijazah_number = "";
+      }
+      await onSave(dataToSave);
       onClose();
     } catch (err) {
       setError(err.message || "Gagal memperbarui data siswa");
@@ -173,20 +183,23 @@ export default function EditStudentModal({
           required
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="No. Ijazah"
-            name="ijazah_number"
-            value={form.ijazah_number}
-            onChange={handleChange}
-          />
+        <div className={`grid ${form.status === 'alumni' ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
+          {form.status === 'alumni' && (
+            <Input
+              label="No. Ijazah"
+              name="ijazah_number"
+              value={form.ijazah_number}
+              onChange={handleChange}
+            />
+          )}
           <Input
             label="Rombel & Absen *"
             name="rombel_absen"
-            value={form.rombel_absen}
+            value={form.status === 'alumni' ? '-' : form.rombel_absen}
             onChange={handleChange}
             placeholder="Contoh: X-1-01"
-            required
+            required={form.status !== 'alumni'}
+            disabled={form.status === 'alumni'}
           />
         </div>
 
