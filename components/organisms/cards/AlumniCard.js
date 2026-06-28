@@ -1,3 +1,14 @@
+import { 
+  HiAcademicCap, 
+  HiSparkles, 
+  HiBriefcase, 
+  HiBuildingOffice, 
+  HiClock, 
+  HiBookOpen, 
+  HiPhone, 
+  HiEnvelope 
+} from "react-icons/hi2";
+
 const sanitizeUrl = (url) => {
   if (!url) return "#";
   const lowerUrl = url.toLowerCase();
@@ -12,10 +23,10 @@ export default function AlumniCard({ alumni, isPublic = false }) {
   return (
     <div className="group bg-white rounded-2xl shadow-soft hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full relative">
       {/* CARD HEADER (Gradient & Graduation Year Badge) */}
-      <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-accent to-accent/80 p-6 relative overflow-hidden">
         {/* Dekorasi pola SVG */}
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-orange-300 opacity-20 rounded-full blur-xl"></div>
+        <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white opacity-15 rounded-full blur-xl"></div>
 
         <div className="relative z-10 flex justify-between items-start">
           <div className="flex-1 pr-4">
@@ -24,12 +35,12 @@ export default function AlumniCard({ alumni, isPublic = false }) {
             </h3>
             <div className="mt-2">
               <span className="bg-white/20 text-white backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider shadow-sm flex items-center inline-flex gap-1.5">
-                🎓 Alumni Lulusan {alumni.graduation_year}
+                <HiAcademicCap className="w-4 h-4" /> Alumni Lulusan {alumni.graduation_year}
               </span>
             </div>
           </div>
-          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white text-2xl shadow-inner flex-shrink-0">
-            🌟
+          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white shadow-inner flex-shrink-0">
+            <HiSparkles className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -81,19 +92,18 @@ export default function AlumniCard({ alumni, isPublic = false }) {
         <div className="space-y-4 text-sm flex-1">
           {/* Job (Tampil Publik & Admin) */}
           {alumni.job_title && (
-            <div className="flex items-start gap-3 bg-blue-50 p-4 rounded-xl border border-blue-100/50 transition-colors hover:bg-blue-100/50">
-              <span className="text-2xl mt-0.5">💼</span>
+            <div className="flex items-start gap-3 bg-primary/5 p-4 rounded-xl border border-primary/10 transition-colors hover:bg-primary/10">
+              <HiBriefcase className="w-6 h-6 text-primary mt-0.5 flex-shrink-0" />
               <div className="flex-1">
                 <p className="font-bold text-gray-900 text-base">{alumni.job_title}</p>
-                {/* Admin melihat perusahaan dan tanggal, publik hanya jika relevan, tapi instruksi bilang "pekerjaan sekarang" saja untuk publik */}
                 {!isPublic && alumni.job_company && (
-                  <p className="text-blue-800 font-medium mt-1">
-                    🏢 {alumni.job_company}
+                  <p className="text-primary font-medium mt-1 flex items-center gap-1.5">
+                    <HiBuildingOffice className="w-4 h-4" /> {alumni.job_company}
                   </p>
                 )}
                 {!isPublic && alumni.job_start && (
                   <p className="text-xs text-gray-500 font-medium mt-2 flex items-center gap-1">
-                    🕒 {alumni.job_start} {alumni.job_end ? `- ${alumni.job_end}` : "- Sekarang"}
+                    <HiClock className="w-3.5 h-3.5" /> {alumni.job_start} {alumni.job_end ? `- ${alumni.job_end}` : "- Sekarang"}
                   </p>
                 )}
               </div>
@@ -102,15 +112,15 @@ export default function AlumniCard({ alumni, isPublic = false }) {
 
           {/* University (HANYA ADMIN) */}
           {!isPublic && alumni.university_name && (
-            <div className="flex items-start gap-3 bg-purple-50 p-4 rounded-xl border border-purple-100/50 transition-colors hover:bg-purple-100/50">
-              <span className="text-2xl mt-0.5">🏛️</span>
+            <div className="flex items-start gap-3 bg-accent/5 p-4 rounded-xl border border-accent/10 transition-colors hover:bg-accent/10">
+              <HiAcademicCap className="w-6 h-6 text-accent mt-0.5 flex-shrink-0" />
               <div className="flex-1">
                 <p className="font-bold text-gray-900 text-base">
                   {alumni.university_name}
                 </p>
                 {alumni.university_major && (
-                  <p className="text-purple-800 font-medium mt-1">
-                    📖 {alumni.university_major}
+                  <p className="text-accent font-medium mt-1 flex items-center gap-1.5">
+                    <HiBookOpen className="w-4 h-4" /> {alumni.university_major}
                   </p>
                 )}
               </div>
@@ -124,19 +134,19 @@ export default function AlumniCard({ alumni, isPublic = false }) {
             {alumni.phone && (
               <a
                 href={`tel:${alumni.phone}`}
-                className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition-colors text-sm font-medium bg-blue-50 px-3 py-1.5 rounded-lg"
+                className="flex items-center gap-1.5 text-primary hover:text-primary-dark transition-colors text-sm font-medium bg-primary/5 px-3 py-1.5 rounded-lg"
                 title="Telepon"
               >
-                📞 {alumni.phone}
+                <HiPhone className="w-4 h-4" /> {alumni.phone}
               </a>
             )}
             {alumni.email && (
               <a
                 href={`mailto:${alumni.email}`}
-                className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition-colors text-sm font-medium bg-blue-50 px-3 py-1.5 rounded-lg"
+                className="flex items-center gap-1.5 text-primary hover:text-primary-dark transition-colors text-sm font-medium bg-primary/5 px-3 py-1.5 rounded-lg"
                 title="Email"
               >
-                ✉️ {alumni.email}
+                <HiEnvelope className="w-4 h-4" /> {alumni.email}
               </a>
             )}
           </div>

@@ -1,3 +1,16 @@
+import { 
+  HiAcademicCap, 
+  HiMapPin, 
+  HiBuildingLibrary, 
+  HiSparkles, 
+  HiUserGroup, 
+  HiPhone, 
+  HiEnvelope, 
+  HiPencil, 
+  HiTrash, 
+  HiArrowUturnLeft 
+} from "react-icons/hi2";
+
 export default function StudentCard({
   student,
   isPublic = false,
@@ -9,10 +22,10 @@ export default function StudentCard({
   return (
     <div className="group bg-white rounded-2xl shadow-soft hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full relative">
       {/* CARD HEADER (Gradient & Badge) */}
-      <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-primary to-accent p-6 relative overflow-hidden">
         {/* Dekorasi pola SVG */}
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-blue-300 opacity-20 rounded-full blur-xl"></div>
+        <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white opacity-15 rounded-full blur-xl"></div>
         
         <div className="relative z-10 flex justify-between items-start">
           <div className="flex-1">
@@ -30,8 +43,8 @@ export default function StudentCard({
               )}
             </div>
           </div>
-          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white text-2xl shadow-inner flex-shrink-0 ml-3">
-            👨‍🎓
+          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white shadow-inner flex-shrink-0 ml-3">
+            <HiAcademicCap className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -64,7 +77,7 @@ export default function StudentCard({
             {!isPublic && student?.status !== "alumni" && student?.kelas && (
               <div>
                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Kelas</p>
-                <p className="text-sm font-semibold text-blue-700 bg-blue-50 inline-block px-2 py-0.5 rounded-md">
+                <p className="text-sm font-semibold text-primary bg-primary/10 inline-block px-2 py-0.5 rounded-md">
                   {student?.kelas}
                 </p>
               </div>
@@ -73,7 +86,7 @@ export default function StudentCard({
 
           {/* INFORMASI LAHIR (Tampil untuk publik dan admin) */}
           <div className="flex items-start gap-3">
-            <span className="text-gray-400 mt-0.5 text-lg">📍</span>
+            <HiMapPin className="text-gray-400 mt-1 w-5 h-5 flex-shrink-0" />
             <div>
               <p className="text-sm text-gray-800 font-medium leading-snug">
                 {student?.birth_place || "-"}, {student?.birth_date || "-"}
@@ -88,7 +101,7 @@ export default function StudentCard({
               {/* Rombel */}
               {student?.classroom && (
                 <div className="flex items-start gap-3">
-                  <span className="text-gray-400 mt-0.5 text-lg">🏫</span>
+                  <HiBuildingLibrary className="text-gray-400 mt-1 w-5 h-5 flex-shrink-0" />
                   <div>
                     <p className="text-sm text-gray-800 font-medium leading-snug">
                       {student.classroom.name}-{student.absen_number}
@@ -100,7 +113,7 @@ export default function StudentCard({
               
               {/* Agama */}
               <div className="flex items-start gap-3">
-                <span className="text-gray-400 mt-0.5 text-lg">🕊️</span>
+                <HiSparkles className="text-gray-400 mt-1 w-5 h-5 flex-shrink-0" />
                 <div>
                   <p className="text-sm text-gray-800 font-medium leading-snug">
                     {student?.religion || "-"}
@@ -112,7 +125,7 @@ export default function StudentCard({
               {/* Orang Tua */}
               {(student?.father_name || student?.parent_name) && (
                 <div className="flex items-start gap-3">
-                  <span className="text-gray-400 mt-0.5 text-lg">👨‍👩‍👧</span>
+                  <HiUserGroup className="text-gray-400 mt-1 w-5 h-5 flex-shrink-0" />
                   <div>
                     <p className="text-sm text-gray-800 font-medium leading-snug">
                       {student?.father_name || student?.parent_name}
@@ -126,13 +139,13 @@ export default function StudentCard({
               {(student?.phone || student?.email) && (
                 <div className="pt-3 mt-3 border-t border-gray-100 flex flex-wrap gap-4">
                   {student?.phone && (
-                    <a href={`tel:${student.phone}`} className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition-colors text-sm font-medium">
-                      📞 {student.phone}
+                    <a href={`tel:${student.phone}`} className="flex items-center gap-1.5 text-primary hover:text-primary-dark transition-colors text-sm font-medium bg-primary/5 px-2.5 py-1 rounded-lg">
+                      <HiPhone className="w-4 h-4" /> {student.phone}
                     </a>
                   )}
                   {student?.email && (
-                    <a href={`mailto:${student.email}`} className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition-colors text-sm font-medium">
-                      ✉️ {student.email}
+                    <a href={`mailto:${student.email}`} className="flex items-center gap-1.5 text-primary hover:text-primary-dark transition-colors text-sm font-medium bg-primary/5 px-2.5 py-1 rounded-lg">
+                      <HiEnvelope className="w-4 h-4" /> {student.email}
                     </a>
                   )}
                 </div>
@@ -149,22 +162,22 @@ export default function StudentCard({
             onClick={() => onEdit(student)}
             className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all font-semibold text-sm shadow-sm flex items-center gap-1.5"
           >
-            ✏️ Edit
+            <HiPencil className="w-4 h-4" /> Edit
           </button>
 
           <button
             onClick={() => onDelete(student)}
             className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-all font-semibold text-sm shadow-sm flex items-center gap-1.5"
           >
-            🗑️ Hapus
+            <HiTrash className="w-4 h-4" /> Hapus
           </button>
 
           {student?.status !== "alumni" && (
             <button
               onClick={() => onMakeAlumni(student)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all font-semibold text-sm shadow-sm flex items-center gap-1.5 ml-auto w-full sm:w-auto justify-center mt-2 sm:mt-0"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-all font-semibold text-sm shadow-sm flex items-center gap-1.5 ml-auto w-full sm:w-auto justify-center mt-2 sm:mt-0"
             >
-              🎓 Jadikan Alumni
+              <HiAcademicCap className="w-4 h-4" /> Jadikan Alumni
             </button>
           )}
 
@@ -173,7 +186,7 @@ export default function StudentCard({
               onClick={() => onUndoAlumni(student)}
               className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all font-semibold text-sm shadow-sm flex items-center gap-1.5 ml-auto w-full sm:w-auto justify-center mt-2 sm:mt-0"
             >
-              ↩️ Batalkan Alumni
+              <HiArrowUturnLeft className="w-4 h-4" /> Batalkan Alumni
             </button>
           )}
         </div>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "../hooks/useAuth";
 import { publicGetStudents, publicGetAlumni } from "../lib/api";
 import Pagination from "../components/molecules/Pagination";
+import { HiUserGroup, HiAcademicCap, HiPresentationChartBar, HiMagnifyingGlass } from "react-icons/hi2";
 // ========================
 // MAIN COMPONENT
 // ========================
@@ -153,9 +154,10 @@ export default function PublicHome() {
                 setStudentPage(1);
                 setAlumniPage(1);
               }}
-              placeholder="🔍 Cari siswa atau alumni (Nama / NIS / NISN / NIM)..."
-              className="w-full px-6 py-4 rounded-2xl border-2 border-gray-200 bg-white shadow-soft focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-lg"
+              placeholder="Cari siswa atau alumni (Nama / NIS / NISN / NIM)..."
+              className="w-full pl-12 pr-6 py-4 rounded-2xl border-2 border-gray-200 bg-white shadow-soft focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-lg"
             />
+            <HiMagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" />
           </div>
         </div>
       </section>
@@ -167,19 +169,19 @@ export default function PublicHome() {
         {/* Kartu Statistik */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <StatsCard
-            icon="👨‍🎓"
+            icon={<HiUserGroup className="w-8 h-8 text-white" />}
             label="Total Siswa Aktif"
             value={totalStudents}
-            color="bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
+            color="bg-gradient-to-br from-primary to-accent text-white"
           />
           <StatsCard
-            icon="🎓"
+            icon={<HiAcademicCap className="w-8 h-8 text-white" />}
             label="Total Alumni"
             value={totalAlumni}
-            color="bg-gradient-to-br from-amber-400 to-orange-500 text-white"
+            color="bg-gradient-to-br from-accent to-[#5a3680] text-white"
           />
           <StatsCard
-            icon="📊"
+            icon={<HiPresentationChartBar className="w-8 h-8 text-white" />}
             label="Total Data"
             value={totalStudents + totalAlumni}
             color="bg-gradient-to-br from-emerald-500 to-teal-600 text-white"
@@ -208,23 +210,23 @@ export default function PublicHome() {
             <div className="flex gap-2 mb-8 p-2 bg-white rounded-2xl shadow-soft max-w-md">
               <button
                 onClick={() => setActiveTab("students")}
-                className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all ${
+                className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
                   activeTab === "students"
                     ? "bg-primary text-white shadow-lg"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                👨‍🎓 Siswa ({totalStudents})
+                <HiUserGroup className="w-5 h-5" /> Siswa ({totalStudents})
               </button>
               <button
                 onClick={() => setActiveTab("alumni")}
-                className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all ${
+                className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
                   activeTab === "alumni"
-                    ? "bg-amber-500 text-white shadow-lg"
+                    ? "bg-accent text-white shadow-lg"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                🎓 Alumni ({totalAlumni})
+                <HiAcademicCap className="w-5 h-5" /> Alumni ({totalAlumni})
               </button>
             </div>
 
