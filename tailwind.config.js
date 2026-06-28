@@ -10,15 +10,24 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#5B4BFF",
-          500: "#5B4BFF",
-          600: "#4839cc",
+          DEFAULT: "#3E236D",
+          500: "#3E236D",
+          600: "#2c184e",
         },
-        lightbg: "#F3F7FF",
+        accent: {
+          DEFAULT: "#955893",
+          500: "#955893",
+          600: "#7c447a",
+        },
+        lightbg: "#F7F5FA",
         card: "#FFFFFF"
       },
+      fontFamily: {
+        sans: ["'Source Sans 3'", "sans-serif"],
+        serif: ["'Playfair Display'", "serif"],
+      },
       boxShadow: {
-        soft: "0 6px 18px rgba(71, 96, 130, 0.08)"
+        soft: "0 6px 18px rgba(62, 35, 109, 0.05)"
       }
     }
   },
