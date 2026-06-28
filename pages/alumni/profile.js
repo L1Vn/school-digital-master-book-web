@@ -467,6 +467,7 @@ export default function AlumniProfilePage() {
                           type="date"
                           value={formData.job_start}
                           onChange={handleInputChange}
+                          min={profile?.graduation_year ? `${profile.graduation_year}-01-01` : undefined}
                         />
                         <Input
                           label="Selesai"

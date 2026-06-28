@@ -69,7 +69,7 @@ export default function AdminStudentsPage() {
         per_page: itemsPerPage,
         search,
         gender: genderFilter,
-        class: classFilter
+        classroom_id: classFilter
       });
       
       const responseData = data.data?.data ? data.data : data;
@@ -205,8 +205,8 @@ export default function AdminStudentsPage() {
           >
             <option value="">🏫 Semua Kelas</option>
             {classes.map((cls) => (
-              <option key={cls} value={cls}>
-                Kelas {cls}
+              <option key={cls.id} value={cls.id}>
+                {cls.name}
               </option>
             ))}
           </select>
@@ -291,9 +291,9 @@ export default function AdminStudentsPage() {
                       {student.name}
                     </td>
                     <td className="p-4">
-                      {student.rombel_absen ? (
+                      {student.classroom ? (
                         <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium">
-                          {student.rombel_absen}
+                          {student.classroom.name}
                         </span>
                       ) : (
                         <span className="text-gray-400 italic text-sm">-</span>
@@ -363,6 +363,7 @@ export default function AdminStudentsPage() {
           onClose={() => setShowAddModal(false)}
           onSave={handleAddStudent}
           students={students}
+          classrooms={classes}
         />
       )}
 
@@ -375,6 +376,7 @@ export default function AdminStudentsPage() {
             setCurrentStudent(null);
           }}
           onSave={handleEditStudent}
+          classrooms={classes}
         />
       )}
 

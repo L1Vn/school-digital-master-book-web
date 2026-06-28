@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import Swal from 'sweetalert2';
 
 export default function AdminNotificationsPage() {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   
   const [notifications, setNotifications] = useState([]);
@@ -20,13 +20,13 @@ export default function AdminNotificationsPage() {
 
   // Cek otorisasi
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
+    if (!authLoading && !isAdmin) {
       if (user) {
         toast.error("Anda tidak memiliki akses ke halaman ini");
       }
       router.replace("/");
     }
-  }, [isLoading, isAdmin, user, router]);
+  }, [authLoading, isAdmin, user, router]);
 
   // Load notifikasi
   useEffect(() => {
@@ -143,7 +143,7 @@ export default function AdminNotificationsPage() {
     });
   }
 
-  if (isLoading || !isAdmin) {
+  if (authLoading || !isAdmin) {
     return <Loading />;
   }
 

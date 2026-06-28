@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import Pagination from "../../components/molecules/Pagination";
 
 export default function AdminSubjectsPage() {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,13 +32,13 @@ export default function AdminSubjectsPage() {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
+    if (!authLoading && !isAdmin) {
       if (user) {
         toast.error("Anda tidak memiliki akses ke halaman ini");
       }
       router.replace("/");
     }
-  }, [isLoading, isAdmin, user, router]);
+  }, [authLoading, isAdmin, user, router]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -140,7 +140,7 @@ export default function AdminSubjectsPage() {
   // Filter dihapus karena dihandle oleh backend
   const filteredSubjects = subjects;
 
-  if (isLoading || !isAdmin) {
+  if (authLoading || !isAdmin) {
     return <Loading />;
   }
 

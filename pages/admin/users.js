@@ -11,12 +11,13 @@ import toast from "react-hot-toast";
 import Pagination from "../../components/molecules/Pagination";
 
 export default function AdminUsersPage() {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
-  
+
   const [users, setUsers] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [alumni, setAlumni] = useState([]);
+  const [classrooms, setClassrooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -37,26 +38,26 @@ export default function AdminUsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 15;
-  
+  const itemsPerPage = 10;
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     role: ROLES.GURU,
     subject: "", // Untuk Guru
-    class: "", // Untuk Wali Kelas
+    classroom_id: "", // Untuk Wali Kelas
     alumni: "", // Untuk Alumni
   });
 
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
+    if (!authLoading && !isAdmin) {
       if (user) {
         toast.error("Anda tidak memiliki akses ke halaman ini");
       }
       router.replace("/");
     }
-  }, [isLoading, isAdmin, user, router]);
+  }, [authLoading, isAdmin, user, router]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -72,38 +73,40 @@ export default function AdminUsersPage() {
     try {
       setLoading(true);
       setError(null);
-      
-      const [usersRes, subjectsRes, alumniRes] = await Promise.all([
+
+      const [usersRes, subjectsRes, alumniRes, classroomsRes] = await Promise.all([
         api.getUsers({
           page: currentPage,
-          per_page: itemsPerPage,
+          limit: itemsPerPage,
           search,
           role: roleFilter,
         }),
-        api.getSubjects(),
+        api.getSubjects({ limit: 'all' }),
         api.getAlumni(),
+        api.getClassrooms(),
       ]);
-      
-      const userDataResponse = usersRes.data?.data ? usersRes.data.data : usersRes.data;
+
       // Handle the new nested response structure
       let actualUsers = [];
-      if (userDataResponse?.data) {
-          actualUsers = userDataResponse.data;
-          setTotalPages(userDataResponse.last_page || 1);
-          setTotalItems(userDataResponse.total || 0);
+      const paginator = usersRes.data;
+      if (paginator && paginator.data) {
+          actualUsers = paginator.data;
+          setTotalPages(paginator.last_page || 1);
+          setTotalItems(paginator.total || 0);
       } else {
-          actualUsers = userDataResponse || [];
+          actualUsers = paginator || [];
           setTotalPages(1);
           setTotalItems(actualUsers.length);
       }
       setUsers(actualUsers);
-      
-      if (usersRes.data?.role_counts) {
-          setRoleCounts(usersRes.data.role_counts);
+
+      if (usersRes.role_counts) {
+          setRoleCounts(usersRes.role_counts);
       }
-      
+
       setSubjects(Array.isArray(subjectsRes) ? subjectsRes : subjectsRes.data || []);
       setAlumni(alumniRes.data || []);
+      setClassrooms(classroomsRes.data || []);
     } catch (err) {
       console.error("Error loading data:", err);
       setError(err.message || "Gagal memuat data users");
@@ -121,7 +124,7 @@ export default function AdminUsersPage() {
       password: "",
       role: ROLES.GURU,
       subject: "",
-      class: "",
+      classroom_id: "",
       alumni: "",
     });
     setShowModal(true);
@@ -135,7 +138,7 @@ export default function AdminUsersPage() {
       password: "",
       role: userData.role,
       subject: userData.subject || "",
-      class: userData.class || "",
+      classroom_id: userData.classroom_id || "",
       alumni: userData.alumni || "",
     });
     setShowModal(true);
@@ -180,7 +183,7 @@ export default function AdminUsersPage() {
       return;
     }
 
-    if (formData.role === ROLES.WALI_KELAS && !formData.class) {
+    if (formData.role === ROLES.WALI_KELAS && !formData.classroom_id) {
       toast.error("Kelas harus diisi untuk role Wali Kelas");
       return;
     }
@@ -202,8 +205,8 @@ export default function AdminUsersPage() {
         payload.subject = formData.subject;
       }
 
-      if (formData.role === ROLES.WALI_KELAS && formData.class) {
-        payload.class = formData.class;
+      if (formData.role === ROLES.WALI_KELAS && formData.classroom_id) {
+        payload.classroom_id = formData.classroom_id;
       }
 
       if (formData.role === ROLES.ALUMNI && formData.alumni) {
@@ -254,7 +257,7 @@ export default function AdminUsersPage() {
   // Filter dihapus karena dihandle oleh backend
   const filteredUsers = users;
 
-  if (isLoading || !isAdmin) {
+  if (authLoading || !isAdmin) {
     return <Loading />;
   }
 
@@ -397,6 +400,7 @@ export default function AdminUsersPage() {
                 {filteredUsers.map((userData, index) => {
                   const subject = subjects.find((s) => s.id == userData.subject);
                   const alumniData = alumni.find((a) => a.nim == userData.alumni);
+                  const classroom = classrooms.find((c) => c.id == userData.classroom_id);
 
                   return (
                     <tr key={userData.id} className="hover:bg-gray-50 transition-colors">
@@ -424,10 +428,10 @@ export default function AdminUsersPage() {
                               <span>{subject.name}</span>
                             </div>
                           )}
-                          {userData.role === ROLES.WALI_KELAS && userData.class && (
+                          {userData.role === ROLES.WALI_KELAS && classroom && (
                             <div className="flex items-center gap-1">
                               <span>🏫</span>
-                              <span>Kelas {userData.class}</span>
+                              <span>Kelas {classroom.name}</span>
                             </div>
                           )}
                           {userData.role === ROLES.ALUMNI && alumniData && (
@@ -569,7 +573,7 @@ export default function AdminUsersPage() {
                         role: e.target.value,
                         // Reset role-specific fields
                         subject: "",
-                        class: "",
+                        classroom_id: "",
                         alumni: "",
                       });
                     }}
@@ -578,12 +582,11 @@ export default function AdminUsersPage() {
                     <option value={ROLES.ADMIN}>Admin</option>
                     <option value={ROLES.GURU}>Guru</option>
                     <option value={ROLES.WALI_KELAS}>Wali Kelas</option>
-                    {editingUser && <option value={ROLES.ALUMNI}>Alumni</option>}
                   </select>
                 </div>
 
                 {/* Field Kondisional Berdasarkan Role */}
-                
+
                 {/* Mata Pelajaran (untuk Guru) */}
                 {formData.role === ROLES.GURU && (
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
@@ -617,44 +620,23 @@ export default function AdminUsersPage() {
                     <label className="block text-sm font-semibold text-purple-900 mb-2">
                       Kelas <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
+                    <select
                       required
-                      value={formData.class}
+                      value={formData.classroom_id}
                       onChange={(e) =>
-                        setFormData({ ...formData, class: e.target.value })
+                        setFormData({ ...formData, classroom_id: e.target.value })
                       }
                       className="w-full px-4 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="Contoh: X-1, XI-2, XII-3"
-                    />
-                    <p className="text-xs text-purple-700 mt-1">
-                      🏫 Format: [Tingkat]-[Nomor Kelas], misal: X-1, XI-2, XII-3
-                    </p>
-                  </div>
-                )}
-
-                {/* Alumni (opsional) */}
-                {formData.role === ROLES.ALUMNI && (
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <label className="block text-sm font-semibold text-green-900 mb-2">
-                      Data Alumni (Opsional)
-                    </label>
-                    <select
-                      value={formData.alumni}
-                      onChange={(e) =>
-                        setFormData({ ...formData, alumni: e.target.value })
-                      }
-                      className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     >
-                      <option value="">Pilih Alumni</option>
-                      {alumni.map((a) => (
-                        <option key={a.nim} value={a.nim}>
-                          {a.name} ({a.nim}) - {a.graduation_year}
+                      <option value="">Pilih Kelas</option>
+                      {classrooms.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-green-700 mt-1">
-                      🎓 Link user ini dengan data alumni yang ada
+                    <p className="text-xs text-purple-700 mt-1">
+                      🏫 Kelas yang menjadi tanggung jawab wali kelas ini
                     </p>
                   </div>
                 )}

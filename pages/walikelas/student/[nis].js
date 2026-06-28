@@ -148,7 +148,7 @@ export default function WaliStudentDetailPage() {
                   <h2 className="text-xl font-bold text-gray-900">{student?.name}</h2>
                   <p className="text-gray-500">{student?.nis} / {student?.nisn}</p>
                   <p className="mt-2 text-sm font-semibold bg-gray-100 px-3 py-1 rounded-full">
-                    Kelas {student?.rombel_absen || "-"}
+                    Kelas {student?.classroom ? `${student?.classroom?.name}-${student?.absen_number}` : "-"}
                   </p>
                 </div>
                 

@@ -32,13 +32,15 @@ export default function WaliKelasSiswaPage() {
   const [showRaportModal, setShowRaportModal] = useState(false);
   const [studentGrades, setStudentGrades] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [academicYears, setAcademicYears] = useState([]);
   const [loadingGrades, setLoadingGrades] = useState(false);
 
   // State untuk form input nilai
   const [showAddGradeForm, setShowAddGradeForm] = useState(false);
   const [gradeForm, setGradeForm] = useState({
     subject_id: "",
-    semester: "Ganjil 2025/2026",
+    academic_year_id: "",
+    semester: "",
     score: "",
   });
   const [savingGrade, setSavingGrade] = useState(false);
@@ -47,12 +49,8 @@ export default function WaliKelasSiswaPage() {
   const [editingGrade, setEditingGrade] = useState(null);
 
   const SEMESTER_OPTIONS = [
-    "Ganjil 2023/2024",
-    "Genap 2023/2024",
-    "Ganjil 2024/2025",
-    "Genap 2024/2025",
-    "Ganjil 2025/2026",
-    "Genap 2025/2026",
+    { value: 'odd', label: 'Ganjil' },
+    { value: 'even', label: 'Genap' }
   ];
 
   useEffect(() => {
@@ -68,6 +66,7 @@ export default function WaliKelasSiswaPage() {
     if (isWaliKelas) {
       loadStudents();
       loadSubjects();
+      loadAcademicYears();
     }
   }, [isWaliKelas]);
 
@@ -97,6 +96,20 @@ export default function WaliKelasSiswaPage() {
       setSubjects(subjectsData);
     } catch (error) {
       toast.error("Gagal memuat data mata pelajaran");
+    }
+  };
+
+  const loadAcademicYears = async () => {
+    try {
+      const response = await api.getAcademicYears();
+      const academicYearsData = Array.isArray(response)
+        ? response
+        : Array.isArray(response.data)
+          ? response.data
+          : [];
+      setAcademicYears(academicYearsData);
+    } catch (error) {
+      toast.error("Gagal memuat data tahun ajaran");
     }
   };
 
@@ -171,7 +184,7 @@ export default function WaliKelasSiswaPage() {
       father_name: selectedStudent.father_name || "",
       address: selectedStudent.address || "",
       ijazah_number: selectedStudent.ijazah_number || "",
-      rombel_absen: selectedStudent.rombel_absen || "",
+      classroom_id: selectedStudent.classroom_id || "",
     });
   };
 
@@ -222,12 +235,13 @@ export default function WaliKelasSiswaPage() {
       await api.storeClassGrade({
         student_id: selectedStudent.nis,
         subject_id: gradeForm.subject_id,
+        academic_year_id: gradeForm.academic_year_id,
         semester: gradeForm.semester,
         score: score,
       });
 
       toast.success("Nilai berhasil ditambahkan");
-      setGradeForm({ subject_id: "", semester: gradeForm.semester, score: "" });
+      setGradeForm({ subject_id: "", academic_year_id: gradeForm.academic_year_id, semester: gradeForm.semester, score: "" });
       setShowAddGradeForm(false);
 
       // Reload grades
@@ -245,6 +259,7 @@ export default function WaliKelasSiswaPage() {
     setEditingGrade(grade);
     setGradeForm({
       subject_id: grade.subject_id,
+      academic_year_id: grade.academic_year_id,
       semester: grade.semester,
       score: grade.score,
     });
@@ -269,12 +284,13 @@ export default function WaliKelasSiswaPage() {
 
       await api.updateClassGrade(editingGrade.id, {
         score: score,
+        academic_year_id: gradeForm.academic_year_id,
         semester: gradeForm.semester,
       });
 
       toast.success("Nilai berhasil diperbarui");
       setEditingGrade(null);
-      setGradeForm({ subject_id: "", semester: gradeForm.semester, score: "" });
+      setGradeForm({ subject_id: "", academic_year_id: gradeForm.academic_year_id, semester: gradeForm.semester, score: "" });
 
       // Reload grades
       if (selectedStudent?.nis) {
@@ -361,7 +377,7 @@ export default function WaliKelasSiswaPage() {
       father_name: selectedStudent.father_name || "",
       address: selectedStudent.address || "",
       ijazah_number: selectedStudent.ijazah_number || "",
-      rombel_absen: selectedStudent.rombel_absen || "",
+      classroom_id: selectedStudent.classroom_id || "",
     });
   };
 
@@ -388,7 +404,7 @@ export default function WaliKelasSiswaPage() {
 
     // Dapatkan subject_id yang sudah ada di semester ini
     const usedSubjectIds = studentGrades
-      .filter((grade) => grade.semester === gradeForm.semester)
+      .filter((grade) => grade.academic_year_id == gradeForm.academic_year_id && grade.semester === gradeForm.semester)
       .map((grade) => grade.subject_id);
 
     // Filter subjects yang belum digunakan
@@ -477,7 +493,7 @@ export default function WaliKelasSiswaPage() {
                     NIS: {selectedStudent.nis} | NISN: {selectedStudent.nisn}
                   </p>
                   <Badge variant="primary" className="mt-1">
-                    {selectedStudent.rombel_absen || user?.class}
+                    {selectedStudent.classroom ? selectedStudent.classroom.name : user?.class}
                   </Badge>
                 </div>
               </div>
@@ -545,7 +561,7 @@ export default function WaliKelasSiswaPage() {
                     {student.gender === "L" ? "L" : "P"}
                   </Badge>
                   <Badge variant="ghost" size="sm">
-                    {student.rombel_absen || "-"}
+                    {student.classroom ? student.classroom.name : "-"}
                   </Badge>
                 </div>
               </div>
@@ -586,7 +602,7 @@ export default function WaliKelasSiswaPage() {
                     {isEditingStudent ? studentForm.name : selectedStudent.name}
                   </h3>
                   <p className="text-gray-600">
-                    {selectedStudent.rombel_absen || user?.class}
+                    {selectedStudent.classroom ? selectedStudent.classroom.name : user?.class}
                   </p>
                 </div>
               </div>
@@ -697,17 +713,7 @@ export default function WaliKelasSiswaPage() {
                       <option value="Konghucu">Konghucu</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Kelas/Rombel
-                    </label>
-                    <Input
-                      name="rombel_absen"
-                      value={studentForm.rombel_absen}
-                      onChange={handleStudentFormChange}
-                      placeholder="Contoh: X-1-05"
-                    />
-                  </div>
+
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Nama Ayah
@@ -854,7 +860,8 @@ export default function WaliKelasSiswaPage() {
           setEditingGrade(null);
           setGradeForm({
             subject_id: "",
-            semester: "Ganjil 2025/2026",
+            academic_year_id: "",
+            semester: "",
             score: "",
           });
         }}
@@ -872,7 +879,7 @@ export default function WaliKelasSiswaPage() {
                   </h4>
                   <p className="text-sm text-gray-600">
                     NIS: {selectedStudent.nis} | Kelas:{" "}
-                    {selectedStudent.rombel_absen || user?.class}
+                    {selectedStudent.classroom ? selectedStudent.classroom.name : user?.class}
                   </p>
                 </div>
                 <Button
@@ -897,6 +904,25 @@ export default function WaliKelasSiswaPage() {
                 >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tahun Ajaran
+                    </label>
+                    <select
+                      name="academic_year_id"
+                      value={gradeForm.academic_year_id}
+                      onChange={handleGradeFormChange}
+                      className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Pilih Tahun Ajaran...</option>
+                      {academicYears.map((year) => (
+                        <option key={year.id} value={year.id}>
+                          {year.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Semester
                     </label>
                     <select
@@ -906,9 +932,10 @@ export default function WaliKelasSiswaPage() {
                       className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       required
                     >
+                      <option value="">Pilih Semester...</option>
                       {SEMESTER_OPTIONS.map((sem) => (
-                        <option key={sem} value={sem}>
-                          {sem}
+                        <option key={sem.value} value={sem.value}>
+                          {sem.label}
                         </option>
                       ))}
                     </select>
@@ -981,7 +1008,8 @@ export default function WaliKelasSiswaPage() {
                           setEditingGrade(null);
                           setGradeForm({
                             subject_id: "",
-                            semester: "Ganjil 2025/2026",
+                            academic_year_id: "",
+                            semester: "",
                             score: "",
                           });
                         }}
@@ -1031,7 +1059,7 @@ export default function WaliKelasSiswaPage() {
                           {grade.subject?.name || "Unknown Subject"}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {grade.semester}
+                          {grade.academic_year?.name || ""} {grade.semester === 'odd' ? 'Ganjil' : grade.semester === 'even' ? 'Genap' : grade.semester}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">

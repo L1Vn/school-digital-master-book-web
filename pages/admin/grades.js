@@ -9,22 +9,23 @@ import DeleteConfirmationModal from "../../components/organisms/modals/DeleteCon
 import toast from "react-hot-toast";
 
 export default function AdminGradesPage() {
-  const { user, isAdmin, isLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const [grades, setGrades] = useState([]);
   const [students, setStudents] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [academicYears, setAcademicYears] = useState([]);
   const [summaries, setSummaries] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // State untuk siswa yang diexpand
   const [expandedStudents, setExpandedStudents] = useState([]);
-  
+
   // Tab aktif per siswa (format: studentId -> "class-semester")
   const [activeTabPerStudent, setActiveTabPerStudent] = useState({});
-  
+
   // State modal
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingGrade, setEditingGrade] = useState(null);
@@ -37,6 +38,7 @@ export default function AdminGradesPage() {
   const [formData, setFormData] = useState({
     student_id: "",
     subject_id: "",
+    academic_year_id: "",
     semester: "",
     score: "",
   });
@@ -44,26 +46,24 @@ export default function AdminGradesPage() {
   // State filter
   const [filters, setFilters] = useState({
     class: "",
+    academic_year_id: "",
     semester: "",
     search: "",
   });
 
-  const CURRENT_YEAR = new Date().getFullYear();
   const SEMESTER_OPTIONS = [
-    `Ganjil ${CURRENT_YEAR - 1}/${CURRENT_YEAR}`,
-    `Genap ${CURRENT_YEAR - 1}/${CURRENT_YEAR}`,
-    `Ganjil ${CURRENT_YEAR}/${CURRENT_YEAR + 1}`,
-    `Genap ${CURRENT_YEAR}/${CURRENT_YEAR + 1}`,
+    { value: 'odd', label: 'Ganjil' },
+    { value: 'even', label: 'Genap' }
   ];
 
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
+    if (!authLoading && !isAdmin) {
       if (user) {
         toast.error("Anda tidak memiliki akses ke halaman ini");
       }
       router.replace("/");
     }
-  }, [isLoading, isAdmin, user, router]);
+  }, [authLoading, isAdmin, user, router]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -76,10 +76,11 @@ export default function AdminGradesPage() {
       setLoading(true);
       setError(null);
 
-      const [gradesRes, studentsRes, subjectsRes] = await Promise.all([
+      const [gradesRes, studentsRes, subjectsRes, academicYearsRes] = await Promise.all([
         api.getGrades({ per_page: 10000 }),
         api.getStudents({ per_page: 10000 }),
         api.getSubjects(),
+        api.getAcademicYears(),
       ]);
 
       // Parse response paginated dari Laravel
@@ -101,15 +102,21 @@ export default function AdminGradesPage() {
         ? subjectsRes
         : subjectsRes.data || [];
 
+      const academicYearsData = Array.isArray(academicYearsRes)
+        ? academicYearsRes
+        : academicYearsRes.data || [];
+
       console.log("Loaded data:", {
         grades: gradesData.length,
         students: studentsData.length,
         subjects: subjectsData.length,
+        academicYears: academicYearsData.length,
       });
 
       setGrades(gradesData);
       setStudents(studentsData);
       setSubjects(subjectsData);
+      setAcademicYears(academicYearsData);
     } catch (err) {
       console.error("Error loading data:", err);
       setError(err.message || "Gagal memuat data");
@@ -121,14 +128,13 @@ export default function AdminGradesPage() {
 
   // Dapatkan unik kelas dari data siswa
   const classes = useMemo(() => {
-    return [
-      ...new Set(
+    return Array.from(
+      new Set(
         students
-          .map((s) => s.rombel_absen?.split("-")[0])
+          .map((s) => s.classroom?.name)
           .filter(Boolean)
-          .sort()
-      ),
-    ];
+      )
+    ).sort();
   }, [students]);
 
   // Kelompokkan nilai berdasarkan siswa
@@ -155,8 +161,15 @@ export default function AdminGradesPage() {
     return studentsWithGrades.filter((student) => {
       // Filter by class
       if (filters.class) {
-        const studentClass = student.rombel_absen?.split("-")[0];
+        const studentClass = student.classroom?.name;
         if (studentClass !== filters.class) return false;
+      }
+
+      // Filter by academic year
+      if (filters.academic_year_id) {
+        const studentGrades = studentGradesMap[student.nis] || [];
+        const hasYear = studentGrades.some((g) => g.academic_year_id == filters.academic_year_id);
+        if (!hasYear) return false;
       }
 
       // Filter by semester - student must have grades in this semester
@@ -178,19 +191,21 @@ export default function AdminGradesPage() {
 
       return true;
     });
-  }, [studentsWithGrades, filters, studentGradesMap]);
+  }, [studentsWithGrades, filters, studentGradesMap, academicYears]);
 
-  // Dapatkan kombinasi unik kelas-semester untuk siswa
+  // Dapatkan kombinasi unik kelas-tahun-semester untuk siswa
   const getStudentSemesters = (studentId) => {
     const studentGrades = studentGradesMap[studentId] || [];
     const student = students.find((s) => s.nis == studentId);
-    
+
     const combinations = new Set();
     studentGrades.forEach((g) => {
-      const studentClass = student?.rombel_absen?.split("-")[0] || "N/A";
-      combinations.add(`${studentClass}|${g.semester}`);
+      const studentClass = student?.classroom?.name || "N/A";
+      const year = academicYears.find(y => y.id == g.academic_year_id);
+      const yearName = year ? year.name : "N/A";
+      combinations.add(`${studentClass}|${g.academic_year_id}|${g.semester}|${yearName}`);
     });
-    
+
     return Array.from(combinations);
   };
 
@@ -202,7 +217,7 @@ export default function AdminGradesPage() {
     } else {
       // Expand
       setExpandedStudents([studentId]); // Only one student expanded at a time
-      
+
       // Set tab aktif default
       const semesters = getStudentSemesters(studentId);
       if (semesters.length > 0) {
@@ -210,27 +225,27 @@ export default function AdminGradesPage() {
           ...activeTabPerStudent,
           [studentId]: semesters[0],
         });
-        
+
         // Load summary untuk tab pertama
-        const [, semester] = semesters[0].split("|");
-        await loadSummaryForStudent(studentId, semester?.trim());
+        const [, yearId, semester] = semesters[0].split("|");
+        await loadSummaryForStudent(studentId, yearId, semester?.trim());
       }
     }
   };
 
   // Load summary dari backend
-  const loadSummaryForStudent = async (studentId, semester) => {
-    if (!studentId || !semester) return;
-    const key = `${studentId}-${semester}`;
-    
+  const loadSummaryForStudent = async (studentId, yearId, semester) => {
+    if (!studentId || !yearId || !semester) return;
+    const key = `${studentId}-${yearId}-${semester}`;
+
     // Optimistic loading state could be set here if needed
     setSummaries((prev) => ({
       ...prev,
       [key]: { loading: true }, // Set loading state
     }));
-    
+
     try {
-      const response = await api.getGradeSummary(studentId, semester);
+      const response = await api.getGradeSummary(studentId, yearId, semester);
       setSummaries((prev) => ({
         ...prev,
         [key]: response.data || { error: "No Data", total_score: 0, average_score: 0, status: "-" },
@@ -254,17 +269,17 @@ export default function AdminGradesPage() {
       ...activeTabPerStudent,
       [studentId]: tab,
     });
-    
+
     // Load summary for this tab
-    const [, semester] = tab.split("|");
-    await loadSummaryForStudent(studentId, semester?.trim());
+    const [, yearId, semester] = tab.split("|");
+    await loadSummaryForStudent(studentId, yearId, semester?.trim());
   };
 
   // Ambil nilai untuk siswa dan tab spesifik
   const getGradesForStudentTab = (studentId, tab) => {
-    const [, semester] = tab.split("|");
+    const [, yearId, semester] = tab.split("|");
     const studentGrades = studentGradesMap[studentId] || [];
-    return studentGrades.filter((g) => g.semester === semester);
+    return studentGrades.filter((g) => g.academic_year_id == yearId && g.semester === semester);
   };
 
   // Handle edit grade
@@ -273,6 +288,7 @@ export default function AdminGradesPage() {
     setFormData({
       student_id: grade.student_id || grade.student?.nis || "",
       subject_id: grade.subject_id,
+      academic_year_id: grade.academic_year_id,
       semester: grade.semester,
       score: grade.score,
     });
@@ -291,11 +307,11 @@ export default function AdminGradesPage() {
     try {
       await api.deleteGrade(gradeToDelete.id);
       toast.success("Nilai berhasil dihapus");
-      
+
       // Reload data and summary
       await loadData();
-      await loadSummaryForStudent(gradeToDelete.student_id, gradeToDelete.semester);
-      
+      await loadSummaryForStudent(gradeToDelete.student_id, gradeToDelete.academic_year_id, gradeToDelete.semester);
+
       setShowDeleteModal(false);
       setGradeToDelete(null);
     } catch (err) {
@@ -311,6 +327,7 @@ export default function AdminGradesPage() {
     if (
       !formData.student_id ||
       !formData.subject_id ||
+      !formData.academic_year_id ||
       !formData.semester ||
       !formData.score
     ) {
@@ -328,6 +345,7 @@ export default function AdminGradesPage() {
       const payload = {
         student_id: formData.student_id,
         subject_id: formData.subject_id,
+        academic_year_id: formData.academic_year_id,
         semester: formData.semester,
         score: score,
       };
@@ -342,13 +360,13 @@ export default function AdminGradesPage() {
 
       setShowEditModal(false);
       setShowAddModal(false);
-      setFormData({ student_id: "", subject_id: "", semester: "", score: "" });
+      setFormData({ student_id: "", subject_id: "", academic_year_id: "", semester: "", score: "" });
       setEditingGrade(null);
       setAddModalStudent(null);
-      
+
       // Reload data and summary
       await loadData();
-      await loadSummaryForStudent(formData.student_id, formData.semester);
+      await loadSummaryForStudent(formData.student_id, formData.academic_year_id, formData.semester);
     } catch (err) {
       console.error("Error saving grade:", err);
       toast.error(err.message || "Gagal menyimpan nilai");
@@ -356,18 +374,18 @@ export default function AdminGradesPage() {
   };
 
   // Handle add grade for specific student
-  const handleAddGradeForStudent = (student, semester) => {
+  const handleAddGradeForStudent = (student, yearId, semester) => {
     setAddModalStudent(student);
     setFormData({
       student_id: student.nis,
       subject_id: "",
+      academic_year_id: yearId || "",
       semester: semester || "",
       score: "",
     });
     setShowAddModal(true);
   };
-
-  if (isLoading || !isAdmin) {
+  if (authLoading || !isAdmin) {
     return <Loading />;
   }
 
@@ -406,6 +424,22 @@ export default function AdminGradesPage() {
             ))}
           </select>
 
+          {/* Academic Year Filter */}
+          <select
+            value={filters.academic_year_id}
+            onChange={(e) =>
+              setFilters({ ...filters, academic_year_id: e.target.value })
+            }
+            className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          >
+            <option value="">📅 Semua Tahun Ajaran</option>
+            {academicYears.map((year) => (
+              <option key={year.id} value={year.id}>
+                {year.name}
+              </option>
+            ))}
+          </select>
+
           {/* Semester Filter */}
           <select
             value={filters.semester}
@@ -414,10 +448,10 @@ export default function AdminGradesPage() {
             }
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            <option value="">📅 Semua Semester</option>
+            <option value="">🗓️ Semua Semester</option>
             {SEMESTER_OPTIONS.map((sem) => (
-              <option key={sem} value={sem}>
-                {sem}
+              <option key={sem.value} value={sem.value}>
+                {sem.label}
               </option>
             ))}
           </select>
@@ -439,7 +473,7 @@ export default function AdminGradesPage() {
           <div className="mt-3">
             <button
               onClick={() =>
-                setFilters({ class: "", semester: "", search: "" })
+                setFilters({ class: "", academic_year_id: "", semester: "", search: "" })
               }
               className="text-sm text-primary hover:text-primary-dark font-semibold"
             >
@@ -477,8 +511,8 @@ export default function AdminGradesPage() {
             const tabGrades = activeTab
               ? getGradesForStudentTab(student.nis, activeTab)
               : [];
-            const [, activeSemester] = activeTab?.split("|") || ["", ""];
-            const summaryKey = `${student.nis}-${activeSemester}`;
+            const [, activeYearId, activeSemester, activeYearName] = activeTab?.split("|") || ["", "", "", ""];
+            const summaryKey = `${student.nis}-${activeYearId}-${activeSemester}`;
             const summary = summaries[summaryKey];
 
             return (
@@ -506,8 +540,8 @@ export default function AdminGradesPage() {
                         <h3 className="text-lg font-bold text-gray-900">
                           {student.name}
                         </h3>
-                        <p className="text-sm text-gray-600">
-                          {student.nis} • {student.rombel_absen || "N/A"}
+                        <p className="text-gray-500 text-sm">
+                          {student.nis} • {student.classroom ? student.classroom.name : "N/A"}
                         </p>
                       </div>
                     </div>
@@ -540,19 +574,23 @@ export default function AdminGradesPage() {
                     {/* Tab Navigation */}
                     {semesters.length > 1 && (
                       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                        {semesters.map((sem) => (
-                          <button
-                            key={sem}
-                            onClick={() => handleTabChange(student.nis, sem)}
-                            className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition ${
-                              activeTab === sem
-                                ? "bg-primary text-white"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            }`}
-                          >
-                            {sem}
-                          </button>
-                        ))}
+                        {semesters.map((sem) => {
+                          const [, yearId, semester, yearName] = sem.split("|");
+                          const label = `Semester ${semester === 'odd' ? 'Ganjil' : 'Genap'} (${yearName})`;
+                          return (
+                            <button
+                              key={sem}
+                              onClick={() => handleTabChange(student.nis, sem)}
+                              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition ${
+                                activeTab === sem
+                                  ? "bg-primary text-white"
+                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -717,7 +755,7 @@ export default function AdminGradesPage() {
                     {/* Add Grade Button */}
                     <button
                       onClick={() =>
-                        handleAddGradeForStudent(student, activeSemester)
+                        handleAddGradeForStudent(student, activeYearId, activeSemester)
                       }
                       className="w-full px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition flex items-center justify-center gap-2"
                     >
@@ -873,6 +911,28 @@ export default function AdminGradesPage() {
                   </select>
                 </div>
 
+                {/* Tahun Ajaran */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Tahun Ajaran <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.academic_year_id}
+                    onChange={(e) =>
+                      setFormData({ ...formData, academic_year_id: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  >
+                    <option value="">Pilih Tahun Ajaran</option>
+                    {academicYears.map((year) => (
+                      <option key={year.id} value={year.id}>
+                        {year.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Semester */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -888,8 +948,8 @@ export default function AdminGradesPage() {
                   >
                     <option value="">Pilih Semester</option>
                     {SEMESTER_OPTIONS.map((sem) => (
-                      <option key={sem} value={sem}>
-                        {sem}
+                      <option key={sem.value} value={sem.value}>
+                        {sem.label}
                       </option>
                     ))}
                   </select>

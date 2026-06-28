@@ -115,8 +115,8 @@ export default function AdminAlumniPage() {
       graduation_year: alumniData.graduation_year || new Date().getFullYear(),
       university: alumniData.university || "",
       job_title: alumniData.job_title || "",
-      job_start: alumniData.job_start || "",
-      job_end: alumniData.job_end || "",
+      job_start: alumniData.job_start ? alumniData.job_start.split("T")[0] : "",
+      job_end: alumniData.job_end ? alumniData.job_end.split("T")[0] : "",
       phone: alumniData.phone || "",
       email: alumniData.email || "",
       linkedin: alumniData.linkedin || "",
@@ -130,6 +130,15 @@ export default function AdminAlumniPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    if (formData.job_start && formData.graduation_year) {
+      const jobStartYear = parseInt(formData.job_start.substring(0, 4), 10);
+      const gradYear = parseInt(formData.graduation_year, 10);
+      if (jobStartYear < gradYear) {
+        toast.error(`Tanggal mulai kerja harus pada atau setelah tahun lulus (${gradYear}).`);
+        return;
+      }
+    }
 
     try {
       await api.updateAlumni(currentAlumni.nim, formData);
@@ -458,35 +467,30 @@ export default function AdminAlumniPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Tahun Mulai Kerja
+                    Tanggal Mulai Kerja
                   </label>
                   <input
-                    type="number"
+                    type="date"
                     value={formData.job_start}
                     onChange={(e) =>
                       setFormData({ ...formData, job_start: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="2020"
-                    min="1900"
-                    max="2100"
+                    min={`${formData.graduation_year}-01-01`}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Tahun Selesai (Opsional)
+                    Tanggal Selesai (Opsional)
                   </label>
                   <input
-                    type="number"
+                    type="date"
                     value={formData.job_end}
                     onChange={(e) =>
                       setFormData({ ...formData, job_end: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Kosongkan jika masih bekerja"
-                    min="1900"
-                    max="2100"
                   />
                 </div>
 
