@@ -1,5 +1,6 @@
 import Modal from "../../molecules/Modal";
 import Button from "../../atoms/Button";
+import { HiExclamationTriangle } from "react-icons/hi2";
 
 export default function DeleteConfirmationModal({
   open,
@@ -13,7 +14,7 @@ export default function DeleteConfirmationModal({
     <Modal isOpen={open} onClose={onClose} title={title} size="sm">
       <div className="space-y-4">
         <div className="flex items-center gap-4 text-amber-600 bg-amber-50 p-4 rounded-lg">
-          <span className="text-2xl">⚠️</span>
+          <HiExclamationTriangle className="text-2xl w-8 h-8 flex-shrink-0" />
           <p className="text-sm font-medium">{message}</p>
         </div>
 

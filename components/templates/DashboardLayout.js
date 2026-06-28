@@ -2,6 +2,15 @@ import { useState } from "react";
 import Sidebar from "../organisms/layout/Sidebar";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../lib/constants";
+import { 
+  HiPresentationChartBar, 
+  HiAcademicCap, 
+  HiDocumentText, 
+  HiBookOpen, 
+  HiUsers, 
+  HiBell,
+  HiUserGroup
+} from "react-icons/hi2";
 
 export default function DashboardLayout({ children }) {
   const { user } = useAuth();
@@ -17,29 +26,29 @@ export default function DashboardLayout({ children }) {
     // Admin Items
     if (role === ROLES.ADMIN) {
       return [
-        { href: "/admin", label: "Dashboard", icon: "📊" },
-        { href: "/admin/students", label: "Siswa", icon: "👨‍🎓" },
-        { href: "/admin/alumni", label: "Alumni", icon: "🎓" },
-        { href: "/admin/grades", label: "Raport", icon: "📝" },
-        { href: "/admin/subjects", label: "Mata Pelajaran", icon: "📚" },
-        { href: "/admin/users", label: "Pengguna", icon: "👥" },
-        { href: "/admin/notifications", label: "Notifikasi", icon: "🔔" },
+        { href: "/admin", label: "Dashboard", icon: <HiPresentationChartBar className="w-5 h-5" /> },
+        { href: "/admin/students", label: "Siswa", icon: <HiUserGroup className="w-5 h-5" /> },
+        { href: "/admin/alumni", label: "Alumni", icon: <HiAcademicCap className="w-5 h-5" /> },
+        { href: "/admin/grades", label: "Raport", icon: <HiDocumentText className="w-5 h-5" /> },
+        { href: "/admin/subjects", label: "Mata Pelajaran", icon: <HiBookOpen className="w-5 h-5" /> },
+        { href: "/admin/users", label: "Pengguna", icon: <HiUsers className="w-5 h-5" /> },
+        { href: "/admin/notifications", label: "Notifikasi", icon: <HiBell className="w-5 h-5" /> },
       ];
     }
 
     // Guru Items
     if (role === ROLES.GURU) {
       return [
-        { href: "/guru", label: "Dashboard", icon: "📊" },
-        { href: "/guru/grades", label: "Input Nilai", icon: "📝" },
+        { href: "/guru", label: "Dashboard", icon: <HiPresentationChartBar className="w-5 h-5" /> },
+        { href: "/guru/grades", label: "Input Nilai", icon: <HiDocumentText className="w-5 h-5" /> },
       ];
     }
 
     // Wali Kelas Items
     if (role === ROLES.WALI_KELAS) {
       return [
-        { href: "/walikelas", label: "Dashboard", icon: "📊" },
-        { href: "/walikelas/siswa", label: "Siswa", icon: "👨‍🎓" },
+        { href: "/walikelas", label: "Dashboard", icon: <HiPresentationChartBar className="w-5 h-5" /> },
+        { href: "/walikelas/siswa", label: "Siswa", icon: <HiUserGroup className="w-5 h-5" /> },
       ];
     }
 

@@ -1,3 +1,5 @@
+import { HiBookOpen, HiUser } from "react-icons/hi2";
+
 export default function StatsCards({ students, icon, label, value, color }) {
   // Komponen Card untuk satu statistik
   const Card = ({ title, value, icon, colorClass }) => {
@@ -20,7 +22,7 @@ export default function StatsCards({ students, icon, label, value, color }) {
           <div
             className={`${isGradient ? "bg-white/20" : "bg-gray-100"} p-4 rounded-xl`}
           >
-            <div className="text-3xl">{icon}</div>
+            <div className={`text-3xl ${isGradient ? "text-white" : "text-primary"}`}>{icon}</div>
           </div>
         </div>
       </div>
@@ -40,13 +42,13 @@ export default function StatsCards({ students, icon, label, value, color }) {
     return (
       <div className="flex gap-4">
         <div className="w-1/3">
-          <Card title="Total Siswa" value={total} icon="📘" />
+          <Card title="Total Siswa" value={total} icon={<HiBookOpen className="w-8 h-8" />} />
         </div>
         <div className="w-1/3">
-          <Card title="Laki-laki" value={male} icon="👦" />
+          <Card title="Laki-laki" value={male} icon={<HiUser className="w-8 h-8" />} />
         </div>
         <div className="w-1/3">
-          <Card title="Perempuan" value={female} icon="👧" />
+          <Card title="Perempuan" value={female} icon={<HiUser className="w-8 h-8 text-accent" />} />
         </div>
       </div>
     );
