@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../hooks/useAuth";
+import { HiEnvelope, HiLockClosed, HiEye, HiEyeSlash, HiArrowLeft } from "react-icons/hi2";
 
 const API_URL = "http://localhost:8000";
 
@@ -71,7 +72,7 @@ export default function Login() {
 
       <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white w-full max-w-4xl relative z-10 flex flex-col md:flex-row overflow-hidden">
         {/* Left Side - Logo & Branding */}
-        <div className="md:w-1/2 bg-gradient-to-br from-primary/5 to-blue-500/10 p-12 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
+        <div className="md:w-1/2 bg-gradient-to-br from-primary/5 to-accent/10 p-12 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
           <Image
             src="/jejakedu.png"
             alt="JejakEdu Logo"
@@ -105,10 +106,7 @@ export default function Login() {
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Email</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                  </svg>
+                  <HiEnvelope className="h-5 w-5" />
                 </div>
                 <input
                   type="email"
@@ -125,9 +123,7 @@ export default function Login() {
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Password</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                  </svg>
+                  <HiLockClosed className="h-5 w-5" />
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -144,15 +140,9 @@ export default function Login() {
                   aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                 >
                   {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                    </svg>
+                    <HiEyeSlash className="h-5 w-5" />
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                      <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                    </svg>
+                    <HiEye className="h-5 w-5" />
                   )}
                 </button>
               </div>
@@ -161,7 +151,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-4 bg-gradient-to-r from-primary to-blue-600 text-white font-semibold py-4 px-4 rounded-xl shadow-md hover:shadow-lg hover:shadow-primary/30 transform hover:-translate-y-0.5 transition-all duration-200 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-none"
+              className="w-full mt-4 bg-gradient-to-r from-primary to-accent text-white font-semibold py-4 px-4 rounded-xl shadow-md hover:shadow-lg hover:shadow-primary/30 transform hover:-translate-y-0.5 transition-all duration-200 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-none"
             >
               {loading ? (
                 <>
@@ -182,9 +172,7 @@ export default function Login() {
               href="/"
               className="group flex items-center gap-2 text-sm text-gray-500 hover:text-primary font-semibold transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform group-hover:-translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-              </svg>
+              <HiArrowLeft className="h-4 w-4 transform group-hover:-translate-x-1 transition-transform" />
               Kembali ke halaman publik
             </Link>
           </div>
