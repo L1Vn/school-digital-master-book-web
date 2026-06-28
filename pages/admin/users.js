@@ -9,6 +9,17 @@ import * as api from "../../lib/api";
 import DeleteConfirmationModal from "../../components/organisms/modals/DeleteConfirmationModal";
 import toast from "react-hot-toast";
 import Pagination from "../../components/molecules/Pagination";
+import { 
+  HiMagnifyingGlass, 
+  HiArrowPath, 
+  HiUsers, 
+  HiBookOpen, 
+  HiBuildingLibrary, 
+  HiAcademicCap,
+  HiPlus,
+  HiPencil,
+  HiTrash
+} from "react-icons/hi2";
 
 export default function AdminUsersPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -305,7 +316,7 @@ export default function AdminUsersPage() {
             onClick={handleAdd}
             className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition flex items-center gap-2 whitespace-nowrap"
           >
-            <span className="text-xl">+</span>
+            <HiPlus className="w-5 h-5" />
             Tambah User
           </button>
         </div>
@@ -313,16 +324,19 @@ export default function AdminUsersPage() {
         {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Search */}
-          <input
-            type="text"
-            placeholder="🔍 Cari nama atau email..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Cari nama atau email..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+            <HiMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          </div>
 
           {/* Role Filter */}
           <select
@@ -333,11 +347,11 @@ export default function AdminUsersPage() {
             }}
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            <option value="">👥 Semua Role</option>
-            <option value={ROLES.ADMIN}>🔴 Admin</option>
-            <option value={ROLES.GURU}>🔵 Guru</option>
-            <option value={ROLES.WALI_KELAS}>🟣 Wali Kelas</option>
-            <option value={ROLES.ALUMNI}>🟢 Alumni</option>
+            <option value="">Semua Role</option>
+            <option value={ROLES.ADMIN}>Admin</option>
+            <option value={ROLES.GURU}>Guru</option>
+            <option value={ROLES.WALI_KELAS}>Wali Kelas</option>
+            <option value={ROLES.ALUMNI}>Alumni</option>
           </select>
         </div>
 
@@ -348,9 +362,9 @@ export default function AdminUsersPage() {
                 setSearch("");
                 setRoleFilter("");
               }}
-              className="text-sm text-primary hover:text-primary-dark font-semibold"
+              className="text-sm text-primary hover:text-primary-dark font-semibold flex items-center gap-1.5"
             >
-              🔄 Reset Filter
+              <HiArrowPath className="w-4 h-4" /> Reset Filter
             </button>
           </div>
         )}
@@ -362,8 +376,8 @@ export default function AdminUsersPage() {
       ) : error ? (
         <ErrorMessage message={error} onRetry={loadData} />
       ) : filteredUsers.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-soft p-12 text-center">
-          <div className="text-6xl mb-4">👥</div>
+        <div className="bg-white rounded-xl shadow-soft p-12 text-center flex flex-col items-center justify-center">
+          <HiUsers className="text-6xl mb-4 text-primary mx-auto" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">
             {search || roleFilter ? "Tidak Ada Hasil" : "Belum Ada User"}
           </h3>
@@ -423,20 +437,20 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-700">
                           {userData.role === ROLES.GURU && subject && (
-                            <div className="flex items-center gap-1">
-                              <span>📚</span>
+                            <div className="flex items-center gap-1.5">
+                              <HiBookOpen className="w-4 h-4 text-primary" />
                               <span>{subject.name}</span>
                             </div>
                           )}
                           {userData.role === ROLES.WALI_KELAS && classroom && (
-                            <div className="flex items-center gap-1">
-                              <span>🏫</span>
+                            <div className="flex items-center gap-1.5">
+                              <HiBuildingLibrary className="w-4 h-4 text-primary" />
                               <span>Kelas {classroom.name}</span>
                             </div>
                           )}
                           {userData.role === ROLES.ALUMNI && alumniData && (
-                            <div className="flex items-center gap-1">
-                              <span>🎓</span>
+                            <div className="flex items-center gap-1.5">
+                              <HiAcademicCap className="w-4 h-4 text-accent" />
                               <span>{alumniData.name}</span>
                             </div>
                           )}
@@ -451,15 +465,17 @@ export default function AdminUsersPage() {
                         <div className="flex justify-center gap-2">
                           <button
                             onClick={() => handleEdit(userData)}
-                            className="px-3 py-1.5 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition text-sm"
+                            className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                            title="Edit"
                           >
-                            ✏️ Edit
+                            <HiPencil className="w-4 h-4" /> Edit
                           </button>
                           <button
                             onClick={() => handleDelete(userData.id, userData.name)}
-                            className="px-3 py-1.5 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition text-sm"
+                            className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                            title="Hapus"
                           >
-                            🗑️
+                            <HiTrash className="w-4 h-4" /> Hapus
                           </button>
                         </div>
                       </td>
@@ -608,8 +624,8 @@ export default function AdminUsersPage() {
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-blue-700 mt-1">
-                      📚 Mata pelajaran yang diampu oleh guru ini
+                    <p className="text-xs text-blue-700 mt-1 flex items-center gap-1">
+                      <HiBookOpen className="w-4 h-4 text-blue-600" /> Mata pelajaran yang diampu oleh guru ini
                     </p>
                   </div>
                 )}
@@ -635,8 +651,8 @@ export default function AdminUsersPage() {
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-purple-700 mt-1">
-                      🏫 Kelas yang menjadi tanggung jawab wali kelas ini
+                    <p className="text-xs text-purple-700 mt-1 flex items-center gap-1">
+                      <HiBuildingLibrary className="w-4 h-4 text-purple-600" /> Kelas yang menjadi tanggung jawab wali kelas ini
                     </p>
                   </div>
                 )}

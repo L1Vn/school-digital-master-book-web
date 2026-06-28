@@ -9,6 +9,7 @@ import Select from "../../../components/atoms/Select";
 import Badge from "../../../components/atoms/Badge";
 import * as api from "../../../lib/api";
 import toast from "react-hot-toast";
+import { HiDocumentText, HiAcademicCap, HiBookmark, HiUser, HiPhone, HiEnvelope, HiCalendar, HiMapPin, HiUserGroup, HiBriefcase } from "react-icons/hi2";
 
 export default function WaliStudentDetailPage() {
   const router = useRouter();
@@ -173,7 +174,12 @@ export default function WaliStudentDetailPage() {
               </Card>
 
               {/* Form Input Nilai */}
-              <Card title="📝 Input Nilai Siswa">
+              <Card title={
+                <div className="flex items-center gap-2">
+                  <HiDocumentText className="w-5 h-5 text-primary" />
+                  <span>Input Nilai Siswa</span>
+                </div>
+              }>
                   <form onSubmit={handleSaveGrade} className="space-y-4">
                       <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>

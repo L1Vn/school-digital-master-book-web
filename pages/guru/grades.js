@@ -13,6 +13,7 @@ import Select from "../../components/atoms/Select";
 import Badge from "../../components/atoms/Badge";
 import AddGradeModal from "../../components/organisms/modals/AddGradeModal";
 import toast from "react-hot-toast";
+import { HiPlus, HiUser } from "react-icons/hi2";
 
 const SEMESTER_OPTIONS = [
   { value: "Ganjil 2023/2024", label: "Ganjil 2023/2024" },
@@ -54,8 +55,13 @@ export default function InputNilaiPage() {
   const [inputValues, setInputValues] = useState({});
 
   useEffect(() => {
-    if (!authLoading && !isGuru) {
-      router.push("/login");
+    if (!authLoading) {
+      if (!user) {
+        router.replace("/login");
+      } else if (!isGuru) {
+        toast.error("Anda tidak memiliki akses ke halaman ini");
+        router.replace("/");
+      }
     }
   }, [authLoading, isGuru, router]);
 
@@ -191,16 +197,18 @@ export default function InputNilaiPage() {
           <div>
             <Button
               variant="primary"
+              className="flex items-center gap-2"
               onClick={() => {
                 if (!filters.semester) {
-                  toast.error("Pilih semester terlebih dahulu");
-                  return;
+                   toast.error("Pilih semester terlebih dahulu");
+                   return;
                 }
                 setIsModalOpen(true);
               }}
               disabled={!filters.semester}
             >
-              + Tambah Nilai
+              <HiPlus className="w-5 h-5" />
+              Tambah Nilai
             </Button>
           </div>
         </div>
@@ -222,7 +230,7 @@ export default function InputNilaiPage() {
               placeholder="Semua Kelas"
               value={filters.kelas}
               onChange={handleFilterChange}
-              options={classes.map((c) => ({ value: c, label: c }))}
+              options={classes.map((c) => ({ value: c.id || c, label: c.name || c }))}
             />
             <Input
               name="search"
@@ -260,9 +268,9 @@ export default function InputNilaiPage() {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-10 h-10 flex items-center justify-center rounded-full text-lg ${student.gender === "L" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"}`}
+                        className={`w-10 h-10 flex items-center justify-center rounded-full ${student.gender === "L" ? "bg-blue-50 text-blue-600" : "bg-pink-50 text-pink-600"}`}
                       >
-                        {student.gender === "L" ? "👨" : "👩"}
+                        <HiUser className="w-5 h-5" />
                       </div>
                       <div>
                         <h3
@@ -281,7 +289,7 @@ export default function InputNilaiPage() {
 
                   <div className="flex flex-wrap gap-2 mb-4 text-xs">
                     <span className="px-2 py-1 bg-gray-100 rounded text-gray-600 font-medium">
-                      Kelas: {student.class || student.kelas || "N/A"}
+                      Kelas: {student.class?.name || (typeof student.class === 'string' ? student.class : null) || student.kelas || "N/A"}
                     </span>
                     <span className="px-2 py-1 bg-gray-100 rounded text-gray-600 font-medium">
                       Sem: {filters.semester}

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import Swal from 'sweetalert2';
 import { useRouter } from "next/router";
 import { useAuth } from "../../hooks/useAuth";
 import DashboardLayout from "../../components/templates/DashboardLayout";
@@ -11,6 +10,7 @@ import Badge from "../../components/atoms/Badge";
 import Modal from "../../components/molecules/Modal";
 import * as api from "../../lib/api";
 import toast from "react-hot-toast";
+import { HiUser, HiDocumentText, HiPencil, HiTrash, HiXMark, HiPlus, HiCheck, HiTrophy } from "react-icons/hi2";
 
 export default function WaliKelasSiswaPage() {
   const { user, isWaliKelas, loading: authLoading } = useAuth();
@@ -47,6 +47,7 @@ export default function WaliKelasSiswaPage() {
 
   // State untuk edit nilai
   const [editingGrade, setEditingGrade] = useState(null);
+  const [deletingGradeId, setDeletingGradeId] = useState(null);
 
   const SEMESTER_OPTIONS = [
     { value: 'odd', label: 'Ganjil' },
@@ -304,31 +305,43 @@ export default function WaliKelasSiswaPage() {
   };
 
   const handleDeleteGrade = async (gradeId) => {
-    const result = await Swal.fire({
-      title: 'Hapus Nilai?',
-      text: "Yakin ingin menghapus nilai ini?",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      confirmButtonText: 'Ya, hapus!',
-      cancelButtonText: 'Batal'
-    });
-    if (!result.isConfirmed) {
-      return;
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-2">
+        <p className="font-semibold text-gray-800">Hapus Nilai?</p>
+        <p className="text-sm text-gray-600">Yakin ingin menghapus nilai ini?</p>
+        <div className="flex gap-2 justify-end mt-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-xs text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+          >
+            Batal
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              setDeletingGradeId(gradeId);
+              try {
+                await api.deleteClassGrade(gradeId);
+                toast.success("Nilai berhasil dihapus");
 
-    try {
-      await api.deleteClassGrade(gradeId);
-      toast.success("Nilai berhasil dihapus");
-
-      // Reload grades
-      if (selectedStudent?.nis) {
-        await loadStudentGrades(selectedStudent.nis);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.message || "Gagal menghapus nilai");
-    }
+                // Reload grades
+                if (selectedStudent?.nis) {
+                  await loadStudentGrades(selectedStudent.nis);
+                }
+              } catch (error) {
+                console.error(error);
+                toast.error(error.response?.data?.message || "Gagal menghapus nilai");
+              } finally {
+                setDeletingGradeId(null);
+              }
+            }}
+            className="px-3 py-1.5 text-xs text-white bg-red-600 rounded-lg hover:bg-red-700 font-medium"
+          >
+            Ya, hapus!
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 });
   };
 
   const handleStudentFormChange = (e) => {
@@ -461,9 +474,9 @@ export default function WaliKelasSiswaPage() {
                 <Button
                   variant="primary"
                   onClick={handleSearch}
-                  className="px-8"
+                  className="px-8 flex items-center gap-1.5"
                 >
-                  🔍 Cari
+                  Cari
                 </Button>
               </div>
             </div>
@@ -508,17 +521,17 @@ export default function WaliKelasSiswaPage() {
                   variant="primary"
                   size="lg"
                   onClick={handleShowDetail}
-                  className="w-full"
+                  className="w-full flex items-center justify-center gap-2"
                 >
-                  👤 Lihat Data Siswa
+                  <HiUser className="w-5 h-5" /> Lihat Data Siswa
                 </Button>
                 <Button
                   variant="secondary"
                   size="lg"
                   onClick={handleShowRaport}
-                  className="w-full"
+                  className="w-full flex items-center justify-center gap-2"
                 >
-                  📊 Lihat & Kelola Raport
+                  <HiDocumentText className="w-5 h-5" /> Lihat & Kelola Raport
                 </Button>
               </div>
             </div>
@@ -611,8 +624,9 @@ export default function WaliKelasSiswaPage() {
                   variant="secondary"
                   size="sm"
                   onClick={() => setIsEditingStudent(true)}
+                  className="flex items-center gap-1.5"
                 >
-                  ✏️ Edit Data
+                  <HiPencil className="w-4 h-4" /> Edit Data
                 </Button>
               )}
             </div>
@@ -758,7 +772,7 @@ export default function WaliKelasSiswaPage() {
                     loading={savingStudent}
                     className="flex-1"
                   >
-                    💾 Simpan Perubahan
+                    Simpan Perubahan
                   </Button>
                   <Button
                     type="button"
@@ -766,7 +780,7 @@ export default function WaliKelasSiswaPage() {
                     onClick={handleCancelEditStudent}
                     className="flex-1"
                   >
-                    ❌ Batal
+                    Batal
                   </Button>
                 </div>
               </form>
@@ -886,8 +900,17 @@ export default function WaliKelasSiswaPage() {
                   variant="primary"
                   onClick={() => setShowAddGradeForm(!showAddGradeForm)}
                   size="sm"
+                  className="flex items-center gap-1.5"
                 >
-                  {showAddGradeForm ? "❌ Batal" : "➕ Tambah Nilai"}
+                  {showAddGradeForm ? (
+                    <>
+                      <HiXMark className="w-4 h-4" /> Batal
+                    </>
+                  ) : (
+                    <>
+                      <HiPlus className="w-4 h-4" /> Tambah Nilai
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -895,8 +918,16 @@ export default function WaliKelasSiswaPage() {
             {/* Form Tambah/Edit Nilai */}
             {(showAddGradeForm || editingGrade) && (
               <Card className="bg-yellow-50">
-                <h4 className="font-bold text-gray-900 mb-4">
-                  {editingGrade ? "✏️ Edit Nilai" : "➕ Tambah Nilai Baru"}
+                <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-1.5">
+                  {editingGrade ? (
+                    <>
+                      <HiPencil className="w-4 h-4" /> Edit Nilai
+                    </>
+                  ) : (
+                    <>
+                      <HiPlus className="w-4 h-4" /> Tambah Nilai Baru
+                    </>
+                  )}
                 </h4>
                 <form
                   onSubmit={editingGrade ? handleUpdateGrade : handleAddGrade}
@@ -961,7 +992,7 @@ export default function WaliKelasSiswaPage() {
                     </select>
                     {!editingGrade && availableSubjects.length === 0 && (
                       <p className="text-xs text-amber-600 mt-1">
-                        ⚠️ Semua mata pelajaran sudah memiliki nilai di semester
+                        Semua mata pelajaran sudah memiliki nilai di semester
                         ini
                       </p>
                     )}
@@ -969,7 +1000,7 @@ export default function WaliKelasSiswaPage() {
                       availableSubjects.length < subjects.length &&
                       availableSubjects.length > 0 && (
                         <p className="text-xs text-blue-600 mt-1">
-                          ℹ️ Hanya menampilkan {availableSubjects.length} dari{" "}
+                          Hanya menampilkan {availableSubjects.length} dari{" "}
                           {subjects.length} mata pelajaran yang belum memiliki
                           nilai
                         </p>
@@ -993,12 +1024,12 @@ export default function WaliKelasSiswaPage() {
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      type="submit"
-                      variant="primary"
-                      loading={savingGrade}
-                      className="flex-1"
+                       type="submit"
+                       variant="primary"
+                       loading={savingGrade}
+                       className="flex-1"
                     >
-                      {editingGrade ? "💾 Update Nilai" : "💾 Simpan Nilai"}
+                      {editingGrade ? "Update Nilai" : "Simpan Nilai"}
                     </Button>
                     {editingGrade && (
                       <Button
@@ -1080,17 +1111,25 @@ export default function WaliKelasSiswaPage() {
                         <div className="flex gap-1">
                           <button
                             onClick={() => handleEditGrade(grade)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
                             title="Edit"
                           >
-                            ✏️
+                            <HiPencil className="w-4 h-4" /> Edit
                           </button>
                           <button
                             onClick={() => handleDeleteGrade(grade.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            disabled={deletingGradeId === grade.id}
+                            className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition text-sm flex items-center gap-1 disabled:opacity-50"
                             title="Hapus"
                           >
-                            🗑️
+                            {deletingGradeId === grade.id ? (
+                              <svg className="animate-spin w-4 h-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <HiTrash className="w-4 h-4" />
+                            )} Hapus
                           </button>
                         </div>
                       </div>

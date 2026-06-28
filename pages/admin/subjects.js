@@ -8,6 +8,7 @@ import * as api from "../../lib/api";
 import DeleteConfirmationModal from "../../components/organisms/modals/DeleteConfirmationModal";
 import toast from "react-hot-toast";
 import Pagination from "../../components/molecules/Pagination";
+import { HiPlus, HiMagnifyingGlass, HiArrowPath, HiBookOpen, HiPencil, HiTrash } from "react-icons/hi2";
 
 export default function AdminSubjectsPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -32,11 +33,13 @@ export default function AdminSubjectsPage() {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      if (user) {
+    if (!authLoading) {
+      if (!user) {
+        router.replace("/login");
+      } else if (!isAdmin) {
         toast.error("Anda tidak memiliki akses ke halaman ini");
+        router.replace("/");
       }
-      router.replace("/");
     }
   }, [authLoading, isAdmin, user, router]);
 
@@ -169,25 +172,25 @@ export default function AdminSubjectsPage() {
 
           <button
             onClick={handleAdd}
-            className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition flex items-center gap-2"
+            className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold transition flex items-center gap-2"
           >
-            <span className="text-xl">+</span>
+            <HiPlus className="w-5 h-5" />
             Tambah Mata Pelajaran
           </button>
         </div>
 
-        {/* Search */}
-        <div className="mt-4">
+        <div className="mt-4 relative">
           <input
             type="text"
-            placeholder="🔍 Cari nama atau kode mata pelajaran..."
+            placeholder="Cari nama atau kode mata pelajaran..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           />
+          <HiMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
         </div>
 
         {search && (
@@ -197,9 +200,9 @@ export default function AdminSubjectsPage() {
                 setSearch("");
                 setCurrentPage(1);
               }}
-              className="text-sm text-primary hover:text-primary-dark font-semibold"
+              className="text-sm text-primary hover:text-primary-dark font-semibold flex items-center gap-1"
             >
-              🔄 Reset Pencarian
+              <HiArrowPath className="w-4 h-4" /> Reset Pencarian
             </button>
           </div>
         )}
@@ -211,8 +214,8 @@ export default function AdminSubjectsPage() {
       ) : error ? (
         <ErrorMessage message={error} onRetry={loadSubjects} />
       ) : filteredSubjects.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-soft p-12 text-center">
-          <div className="text-6xl mb-4">📚</div>
+        <div className="bg-white rounded-xl shadow-soft p-12 text-center flex flex-col items-center">
+          <HiBookOpen className="text-6xl mb-4 text-primary" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">
             {search ? "Tidak Ada Hasil" : "Belum Ada Mata Pelajaran"}
           </h3>
@@ -281,15 +284,17 @@ export default function AdminSubjectsPage() {
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => handleEdit(subject)}
-                          className="px-3 py-1.5 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition text-sm"
+                          className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                          title="Edit"
                         >
-                          ✏️ Edit
+                          <HiPencil className="w-4 h-4" /> Edit
                         </button>
                         <button
                           onClick={() => handleDelete(subject.id, subject.name)}
-                          className="px-3 py-1.5 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition text-sm"
+                          className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                          title="Hapus"
                         >
-                          🗑️ Hapus
+                          <HiTrash className="w-4 h-4" /> Hapus
                         </button>
                       </div>
                     </td>

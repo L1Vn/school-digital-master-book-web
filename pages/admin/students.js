@@ -10,6 +10,17 @@ import DeleteConfirmationModal from "../../components/organisms/modals/DeleteCon
 import { getStudents, deleteStudent, createStudent, updateStudent } from "../../lib/api";
 import toast from "react-hot-toast";
 import Pagination from "../../components/molecules/Pagination";
+import { 
+  HiPlus, 
+  HiMagnifyingGlass, 
+  HiArrowPath, 
+  HiUserGroup, 
+  HiUser, 
+  HiAcademicCap, 
+  HiBookOpen, 
+  HiPencil, 
+  HiTrash 
+} from "react-icons/hi2";
 import { useClasses } from "../../hooks/useClasses";
 
 export default function AdminStudentsPage() {
@@ -64,14 +75,14 @@ export default function AdminStudentsPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await getStudents({ 
-        page: currentPage, 
+      const data = await getStudents({
+        page: currentPage,
         per_page: itemsPerPage,
         search,
         gender: genderFilter,
         classroom_id: classFilter
       });
-      
+
       const responseData = data.data?.data ? data.data : data;
       setStudents(responseData.data || []);
       setTotalPages(responseData.last_page || 1);
@@ -81,6 +92,10 @@ export default function AdminStudentsPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function openAddModal() {
+    setShowAddModal(true);
   }
 
   function openEditModal(student) {
@@ -156,10 +171,10 @@ export default function AdminStudentsPage() {
           </div>
 
           <button
-            onClick={() => setShowAddModal(true)}
-            className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition flex items-center gap-2"
+            onClick={openAddModal}
+            className="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold transition flex items-center justify-center gap-2"
           >
-            <span className="text-xl">+</span>
+            <HiPlus className="w-5 h-5" />
             Tambah Siswa
           </button>
         </div>
@@ -167,17 +182,18 @@ export default function AdminStudentsPage() {
         {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 relative">
             <input
               type="text"
-              placeholder="🔍 Cari NIS, NISN, nama, kelas..."
+              placeholder="Cari NIS, NISN, nama, kelas..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             />
+            <HiMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           </div>
 
           {/* Gender Filter */}
@@ -189,9 +205,9 @@ export default function AdminStudentsPage() {
             }}
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            <option value="">👥 Semua Jenis Kelamin</option>
-            <option value="Laki-laki">🚹 Laki-laki</option>
-            <option value="Perempuan">🚺 Perempuan</option>
+            <option value="">Semua Jenis Kelamin</option>
+            <option value="Laki-laki">Laki-laki</option>
+            <option value="Perempuan">Perempuan</option>
           </select>
 
           {/* Class Filter */}
@@ -203,7 +219,7 @@ export default function AdminStudentsPage() {
             }}
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            <option value="">🏫 Semua Kelas</option>
+            <option value="">Semua Kelas</option>
             {classes.map((cls) => (
               <option key={cls.id} value={cls.id}>
                 {cls.name}
@@ -222,9 +238,9 @@ export default function AdminStudentsPage() {
                 setClassFilter("");
                 setCurrentPage(1);
               }}
-              className="text-sm text-primary hover:text-primary-dark font-semibold"
+              className="text-sm text-primary hover:text-primary-dark font-semibold flex items-center gap-1.5"
             >
-              🔄 Reset Semua Filter
+              <HiArrowPath className="w-4 h-4" /> Reset Semua Filter
             </button>
           </div>
         )}
@@ -236,8 +252,8 @@ export default function AdminStudentsPage() {
       ) : error ? (
         <ErrorMessage message={error} onRetry={loadStudents} />
       ) : filteredStudents.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-soft p-12 text-center">
-          <div className="text-6xl mb-4">👨‍🎓</div>
+        <div className="bg-white rounded-xl shadow-soft p-12 text-center flex flex-col items-center justify-center">
+          <HiUserGroup className="text-6xl mb-4 text-primary" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">
             {search || genderFilter || classFilter
               ? "Tidak Ada Hasil"
@@ -292,7 +308,7 @@ export default function AdminStudentsPage() {
                     </td>
                     <td className="p-4">
                       {student.classroom ? (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium">
+                        <span className="px-2 py-1 bg-primary/10 text-primary rounded-md text-sm font-medium">
                           {student.classroom.name}
                         </span>
                       ) : (
@@ -301,21 +317,21 @@ export default function AdminStudentsPage() {
                     </td>
                     <td className="p-4">
                       {student.gender === "L" || student.gender === "Laki-laki" ? (
-                        <span className="text-blue-600">🚹 Laki-laki</span>
+                        <span className="text-blue-600 flex items-center gap-1.5"><HiUser className="w-4 h-4" /> Laki-laki</span>
                       ) : student.gender === "P" || student.gender === "Perempuan" ? (
-                        <span className="text-pink-600">🚺 Perempuan</span>
+                        <span className="text-pink-600 flex items-center gap-1.5"><HiUser className="w-4 h-4" /> Perempuan</span>
                       ) : (
                         <span className="text-gray-400 italic text-sm">-</span>
                       )}
                     </td>
                     <td className="p-4">
                       {student.status === "alumni" ? (
-                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded-md text-sm font-medium flex inline-flex items-center gap-1">
-                          🎓 Alumni
+                        <span className="px-2 py-1 bg-accent/10 text-accent rounded-md text-sm font-medium flex inline-flex items-center gap-1">
+                          <HiAcademicCap className="w-4 h-4" /> Alumni
                         </span>
                       ) : (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-sm font-medium flex inline-flex items-center gap-1">
-                          📚 Siswa Aktif
+                        <span className="px-2 py-1 bg-primary/10 text-primary rounded-md text-sm font-medium flex inline-flex items-center gap-1">
+                          <HiBookOpen className="w-4 h-4" /> Siswa Aktif
                         </span>
                       )}
                     </td>
@@ -323,17 +339,17 @@ export default function AdminStudentsPage() {
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => openEditModal(student)}
-                          className="px-3 py-1.5 bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                          className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
                           title="Edit"
                         >
-                          ✏️ Edit
+                          <HiPencil className="w-4 h-4" /> Edit
                         </button>
                         <button
                           onClick={() => handleDelete(student)}
-                          className="px-3 py-1.5 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                          className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
                           title="Hapus"
                         >
-                          🗑️ Hapus
+                          <HiTrash className="w-4 h-4" /> Hapus
                         </button>
                       </div>
                     </td>

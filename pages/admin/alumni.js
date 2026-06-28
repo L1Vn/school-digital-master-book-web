@@ -8,6 +8,14 @@ import * as api from "../../lib/api";
 import DeleteConfirmationModal from "../../components/organisms/modals/DeleteConfirmationModal";
 import toast from "react-hot-toast";
 import Pagination from "../../components/molecules/Pagination";
+import { 
+  HiMagnifyingGlass, 
+  HiAcademicCap, 
+  HiBriefcase, 
+  HiPencil, 
+  HiTrash, 
+  HiArrowPath 
+} from "react-icons/hi2";
 
 const sanitizeUrl = (url) => {
   if (!url) return "#";
@@ -62,11 +70,13 @@ export default function AdminAlumniPage() {
 
   // Cek otorisasi
   useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      if (user) {
+    if (!authLoading) {
+      if (!user) {
+        router.replace("/login");
+      } else if (!isAdmin) {
         toast.error("Anda tidak memiliki akses ke halaman ini");
+        router.replace("/");
       }
-      router.replace("/");
     }
   }, [authLoading, isAdmin, user, router]);
 
@@ -196,7 +206,7 @@ export default function AdminAlumniPage() {
       <div className="bg-white rounded-xl shadow-soft p-6 mb-6">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div className="flex items-center gap-4">
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white px-6 py-3 rounded-xl">
+            <div className="bg-gradient-to-br from-accent to-accent-600 text-white px-6 py-3 rounded-xl">
               <p className="text-sm opacity-90">Total Alumni</p>
               <p className="text-3xl font-bold">{totalItems}</p>
             </div>
@@ -207,17 +217,18 @@ export default function AdminAlumniPage() {
         {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           {/* Search */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 relative">
             <input
               type="text"
-              placeholder="🔍 Cari NIM, nama, universitas, pekerjaan..."
+              placeholder="Cari NIM, nama, universitas, pekerjaan..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             />
+            <HiMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           </div>
 
           {/* Year Filter */}
@@ -229,7 +240,7 @@ export default function AdminAlumniPage() {
             }}
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            <option value="">📅 Semua Tahun Lulus</option>
+            <option value="">Semua Tahun Lulus</option>
             {graduationYears.map((year) => (
               <option key={year} value={year}>
                 Tahun {year}
@@ -245,8 +256,8 @@ export default function AdminAlumniPage() {
       ) : error ? (
         <ErrorMessage message={error} onRetry={loadAlumni} />
       ) : filteredAlumni.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-soft p-12 text-center">
-          <div className="text-6xl mb-4">🎓</div>
+        <div className="bg-white rounded-xl shadow-soft p-12 text-center flex flex-col items-center justify-center">
+          <HiAcademicCap className="text-6xl mb-4 text-accent mx-auto" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">
             {search || yearFilter ? "Tidak Ada Hasil" : "Belum Ada Data Alumni"}
           </h3>
@@ -262,9 +273,9 @@ export default function AdminAlumniPage() {
                 setYearFilter("");
                 setCurrentPage(1);
               }}
-              className="px-4 py-2 text-primary font-semibold hover:bg-primary/10 rounded-lg transition"
+              className="px-4 py-2 text-primary font-semibold hover:bg-primary/10 rounded-lg transition flex inline-flex items-center gap-1.5 justify-center"
             >
-              Reset Filter
+              <HiArrowPath className="w-4 h-4" /> Reset Filter
             </button>
           )}
         </div>
@@ -300,13 +311,13 @@ export default function AdminAlumniPage() {
                     </td>
                     <td className="p-4">
                       {alumniData.university && (
-                        <div className="text-sm text-gray-600">
-                          🎓 {alumniData.university}
+                        <div className="text-sm text-gray-600 flex items-center gap-1.5 mb-1">
+                          <HiAcademicCap className="w-4 h-4 text-accent flex-shrink-0" /> {alumniData.university}
                         </div>
                       )}
                       {alumniData.job_title && (
-                        <div className="text-sm text-gray-600">
-                          💼 {alumniData.job_title}
+                        <div className="text-sm text-gray-600 flex items-center gap-1.5">
+                          <HiBriefcase className="w-4 h-4 text-primary flex-shrink-0" /> {alumniData.job_title}
                         </div>
                       )}
                       {!alumniData.university && !alumniData.job_title && (
@@ -317,17 +328,17 @@ export default function AdminAlumniPage() {
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => openEditModal(alumniData)}
-                          className="px-3 py-1.5 bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                          className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
                           title="Edit"
                         >
-                          ✏️ Edit
+                          <HiPencil className="w-4 h-4" /> Edit
                         </button>
                         <button
                           onClick={() => handleDelete(alumniData)}
-                          className="px-3 py-1.5 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                          className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
                           title="Hapus"
                         >
-                          🗑️ Hapus
+                          <HiTrash className="w-4 h-4" /> Hapus
                         </button>
                       </div>
                     </td>

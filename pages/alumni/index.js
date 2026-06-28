@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Header from "../../components/organisms/layout/Header";
-import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 
 export default function AlumniPage() {
   const [step, setStep] = useState("login"); // login | edit
@@ -33,11 +33,7 @@ export default function AlumniPage() {
     );
 
     if (!found) {
-      Swal.fire({
-        title: "Error",
-        text: "Data tidak ditemukan! Periksa kembali NIS & tanggal lahir.",
-        icon: "error"
-      });
+      toast.error("Data tidak ditemukan! Periksa kembali NIS & tanggal lahir.");
       return;
     }
 
@@ -59,11 +55,7 @@ export default function AlumniPage() {
     setStudents(updatedList);
     localStorage.setItem("students_data", JSON.stringify(updatedList));
 
-    Swal.fire({
-      title: "Sukses",
-      text: "Data alumni berhasil diperbarui!",
-      icon: "success"
-    });
+    toast.success("Data alumni berhasil diperbarui!");
   }
 
   // LOGOUT

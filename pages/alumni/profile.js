@@ -10,6 +10,7 @@ import Input from "../../components/atoms/Input";
 import Badge from "../../components/atoms/Badge";
 import { getMyProfile, updateMyProfile, logout } from "../../lib/api";
 import toast from "react-hot-toast";
+import { HiUser, HiBriefcase, HiAcademicCap, HiCalendar, HiGlobeAlt, HiEnvelope, HiPhone, HiArrowRightOnRectangle, HiHome, HiMagnifyingGlass, HiPencilSquare } from "react-icons/hi2";
 
 const sanitizeUrl = (url) => {
   if (!url) return "#";
@@ -46,11 +47,13 @@ export default function AlumniProfilePage() {
 
   // Cek otorisasi
   useEffect(() => {
-    if (!authLoading && !isAlumni) {
-      if (user) {
+    if (!authLoading) {
+      if (!user) {
+        router.replace("/login");
+      } else if (!isAlumni) {
         toast.error("Anda tidak memiliki akses ke halaman ini");
+        router.replace("/");
       }
-      router.replace("/");
     }
   }, [authLoading, isAlumni, router]);
 
@@ -160,12 +163,10 @@ export default function AlumniProfilePage() {
           <div className="absolute top-6 right-6 z-50">
             <button
               onClick={handleLogout}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg border border-white/20 text-sm font-medium transition-all flex items-center gap-2 group"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg border border-white/20 text-sm font-medium transition-all flex items-center gap-2 group shadow-sm"
             >
+              <HiArrowRightOnRectangle className="w-4 h-4" />
               <span>Keluar</span>
-              <span className="group-hover:translate-x-1 transition-transform">
-                →
-              </span>
             </button>
           </div>
         </div>
@@ -183,14 +184,16 @@ export default function AlumniProfilePage() {
                   <span className="font-semibold text-white">{user?.name}</span>
                 </p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 text-sm">
-                📅{" "}
-                {new Date().toLocaleDateString("id-ID", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+              <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 text-sm flex items-center gap-1.5">
+                <HiCalendar className="w-4 h-4" />
+                <span>
+                  {new Date().toLocaleDateString("id-ID", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
               </div>
             </div>
           </div>
@@ -209,8 +212,8 @@ export default function AlumniProfilePage() {
                   <p className="text-gray-500 text-sm">{profile?.nim || "-"}</p>
 
                   <div className="flex flex-wrap gap-2 justify-center mt-4">
-                    <Badge variant="success" size="md" className="shadow-sm">
-                      🎓 Alumni
+                    <Badge variant="success" size="md" className="shadow-sm flex items-center gap-1">
+                      <HiAcademicCap className="w-4 h-4" /> Alumni
                     </Badge>
                     {profile?.graduation_year && (
                       <Badge variant="primary" size="md" className="shadow-sm">
@@ -227,13 +230,13 @@ export default function AlumniProfilePage() {
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {profile?.employed ? (
-                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium flex items-center gap-1">
-                          💼 Bekerja
+                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium flex items-center gap-1.5">
+                          <HiBriefcase className="w-4 h-4" /> Bekerja
                         </span>
                       ) : null}
                       {profile?.in_university ? (
-                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1">
-                          📚 Kuliah
+                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1.5">
+                          <HiAcademicCap className="w-4 h-4" /> Kuliah
                         </span>
                       ) : null}
                       {!profile?.employed && !profile?.in_university && (
@@ -250,12 +253,12 @@ export default function AlumniProfilePage() {
                     </label>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-gray-600 hover:text-blue-600 transition-colors">
-                        <span className="text-lg">📧</span>
+                        <HiEnvelope className="w-4 h-4 text-gray-400" />
                         <span className="text-sm truncate">{user?.email}</span>
                       </div>
                       {profile?.phone && (
                         <div className="flex items-center gap-3 text-gray-600">
-                          <span className="text-lg">📱</span>
+                          <HiPhone className="w-4 h-4 text-gray-400" />
                           <span className="text-sm">{profile.phone}</span>
                         </div>
                       )}
@@ -266,17 +269,17 @@ export default function AlumniProfilePage() {
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         variant="secondary"
-                        className="w-full text-xs"
+                        className="w-full text-xs flex items-center justify-center gap-1"
                         onClick={() => router.push("/")}
                       >
-                        🏠 Home
+                        <HiHome className="w-3.5 h-3.5" /> Home
                       </Button>
                       <Button
                         variant="secondary"
-                        className="w-full text-xs"
+                        className="w-full text-xs flex items-center justify-center gap-1"
                         onClick={() => router.push("/")}
                       >
-                        🔍 Cari
+                        <HiMagnifyingGlass className="w-3.5 h-3.5" /> Cari
                       </Button>
                     </div>
                   </div>
@@ -290,7 +293,7 @@ export default function AlumniProfilePage() {
               <Card
                 title={
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">📝</span>
+                    <HiUser className="w-5 h-5 text-primary" />
                     <span>Informasi Dasar</span>
                   </div>
                 }
@@ -301,9 +304,9 @@ export default function AlumniProfilePage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsEditing(true)}
-                      className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+                      className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all flex items-center gap-1"
                     >
-                      ✏️ Edit Data
+                      <HiPencilSquare className="w-4 h-4" /> Edit Data
                     </Button>
                   )
                 }
@@ -369,7 +372,7 @@ export default function AlumniProfilePage() {
               <Card
                 title={
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">🚀</span>
+                    <HiBriefcase className="w-5 h-5 text-primary" />
                     <span>Pendidikan & Karir</span>
                   </div>
                 }
@@ -380,8 +383,8 @@ export default function AlumniProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-xl shadow-sm">
-                            🎓
+                          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-xl shadow-sm text-blue-600">
+                            <HiAcademicCap className="w-6 h-6" />
                           </div>
                           <div>
                             <label className="text-xs font-bold text-blue-600 uppercase">
@@ -395,8 +398,8 @@ export default function AlumniProfilePage() {
                       </div>
                       <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-xl shadow-sm">
-                            💼
+                          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-xl shadow-sm text-emerald-600">
+                            <HiBriefcase className="w-6 h-6" />
                           </div>
                           <div>
                             <label className="text-xs font-bold text-emerald-600 uppercase">
@@ -487,7 +490,7 @@ export default function AlumniProfilePage() {
               <Card
                 title={
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">🌐</span>
+                    <HiGlobeAlt className="w-5 h-5 text-primary" />
                     <span>Kontak & Media Sosial</span>
                   </div>
                 }
@@ -504,9 +507,7 @@ export default function AlumniProfilePage() {
                           rel="noreferrer"
                           className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-blue-50 transition-colors border border-gray-100 hover:border-blue-200 group"
                         >
-                          <span className="text-2xl grayscale group-hover:grayscale-0 transition-all">
-                            🔗
-                          </span>
+                          <HiGlobeAlt className="w-6 h-6 text-blue-600 transition-all" />
                           <div className="overflow-hidden">
                             <p className="text-xs font-bold text-gray-500 mb-1">
                               LinkedIn
@@ -520,11 +521,6 @@ export default function AlumniProfilePage() {
                       {/* Add other social logic similarly for viewing - simplified for brevity in logic but maintained for visual */}
                       {["instagram", "facebook", "website"].map((social) => {
                         if (!profile[social]) return null;
-                        const icons = {
-                          instagram: "📷",
-                          facebook: "👤",
-                          website: "🌐",
-                        };
                         return (
                           <a
                             key={social}
@@ -533,9 +529,7 @@ export default function AlumniProfilePage() {
                             rel="noreferrer"
                             className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 hover:bg-indigo-50 transition-colors border border-gray-100 hover:border-indigo-200 group"
                           >
-                            <span className="text-2xl grayscale group-hover:grayscale-0 transition-all">
-                              {icons[social]}
-                            </span>
+                            <HiGlobeAlt className="w-6 h-6 text-indigo-600 transition-all" />
                             <div className="overflow-hidden">
                               <p className="text-xs font-bold text-gray-500 mb-1 capitalize">
                                 {social}
@@ -656,7 +650,7 @@ export default function AlumniProfilePage() {
                         loading={saving}
                         className="shadow-lg shadow-blue-500/30 min-w-[120px]"
                       >
-                        💾 Simpan
+                        Simpan
                       </Button>
                     </div>
                   </div>

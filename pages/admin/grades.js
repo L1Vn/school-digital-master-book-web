@@ -7,6 +7,16 @@ import ErrorMessage from "../../components/atoms/ErrorMessage";
 import * as api from "../../lib/api";
 import DeleteConfirmationModal from "../../components/organisms/modals/DeleteConfirmationModal";
 import toast from "react-hot-toast";
+import { 
+  HiMagnifyingGlass, 
+  HiPencil, 
+  HiTrash, 
+  HiChartBar,
+  HiArrowPath,
+  HiDocumentText,
+  HiAcademicCap,
+  HiPlus
+} from "react-icons/hi2";
 
 export default function AdminGradesPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -416,7 +426,7 @@ export default function AdminGradesPage() {
             onChange={(e) => setFilters({ ...filters, class: e.target.value })}
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            <option value="">🏫 Semua Kelas</option>
+            <option value="">Semua Kelas</option>
             {classes.map((cls) => (
               <option key={cls} value={cls}>
                 Kelas {cls}
@@ -432,7 +442,7 @@ export default function AdminGradesPage() {
             }
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            <option value="">📅 Semua Tahun Ajaran</option>
+            <option value="">Semua Tahun Ajaran</option>
             {academicYears.map((year) => (
               <option key={year.id} value={year.id}>
                 {year.name}
@@ -448,7 +458,7 @@ export default function AdminGradesPage() {
             }
             className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
           >
-            <option value="">🗓️ Semua Semester</option>
+            <option value="">Semua Semester</option>
             {SEMESTER_OPTIONS.map((sem) => (
               <option key={sem.value} value={sem.value}>
                 {sem.label}
@@ -457,15 +467,18 @@ export default function AdminGradesPage() {
           </select>
 
           {/* Search */}
-          <input
-            type="text"
-            placeholder="🔍 Cari nama atau NIS..."
-            value={filters.search}
-            onChange={(e) =>
-              setFilters({ ...filters, search: e.target.value })
-            }
-            className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Cari nama atau NIS..."
+              value={filters.search}
+              onChange={(e) =>
+                setFilters({ ...filters, search: e.target.value })
+              }
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+            <HiMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          </div>
         </div>
 
         {/* Reset Filter */}
@@ -475,9 +488,9 @@ export default function AdminGradesPage() {
               onClick={() =>
                 setFilters({ class: "", academic_year_id: "", semester: "", search: "" })
               }
-              className="text-sm text-primary hover:text-primary-dark font-semibold"
+              className="text-sm text-primary hover:text-primary-dark font-semibold flex items-center gap-1.5"
             >
-              🔄 Reset Semua Filter
+              <HiArrowPath className="w-4 h-4" /> Reset Semua Filter
             </button>
           </div>
         )}
@@ -489,8 +502,8 @@ export default function AdminGradesPage() {
       ) : error ? (
         <ErrorMessage message={error} onRetry={loadData} />
       ) : filteredStudents.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-soft p-12 text-center">
-          <div className="text-6xl mb-4">📝</div>
+        <div className="bg-white rounded-xl shadow-soft p-12 text-center flex flex-col items-center">
+          <HiDocumentText className="w-14 h-14 mb-4 text-gray-400" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">
             {filters.class || filters.semester || filters.search
               ? "Tidak Ada Hasil"
@@ -528,13 +541,13 @@ export default function AdminGradesPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div
-                        className={`w-12 h-12 flex items-center justify-center rounded-full text-2xl ${
+                        className={`w-12 h-12 flex items-center justify-center rounded-full ${
                           student.gender === "L"
                             ? "bg-blue-50 text-blue-600"
                             : "bg-pink-50 text-pink-600"
                         }`}
                       >
-                        {student.gender === "L" ? "👨‍🎓" : "👩‍🎓"}
+                        <HiAcademicCap className="w-6 h-6" />
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-gray-900">
@@ -656,15 +669,17 @@ export default function AdminGradesPage() {
                                   <div className="flex justify-center gap-2">
                                     <button
                                       onClick={() => handleEdit(grade)}
-                                      className="px-3 py-1.5 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition text-sm"
+                                      className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                                      title="Edit"
                                     >
-                                      ✏️ Edit
+                                      <HiPencil className="w-4 h-4" /> Edit
                                     </button>
                                     <button
                                       onClick={() => handleDelete(grade)}
-                                      className="px-3 py-1.5 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition text-sm"
+                                      className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-semibold transition text-sm flex items-center gap-1"
+                                      title="Hapus"
                                     >
-                                      🗑️
+                                      <HiTrash className="w-4 h-4" /> Hapus
                                     </button>
                                   </div>
                                 </td>
@@ -685,9 +700,9 @@ export default function AdminGradesPage() {
                               <p className="text-xs text-red-400 mt-1">Key: {summaryKey}</p>
                            </div>
                         ) : (
-                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 shadow-sm">
-                            <h4 className="text-lg font-bold text-gray-900 mb-4 flex justify-between items-center">
-                              <span>📊 Ringkasan Nilai</span>
+                        <div className="bg-gradient-to-br from-indigo-50/50 to-purple-50/50 rounded-xl p-6 shadow-sm">
+                             <h4 className="text-lg font-bold text-gray-900 mb-4 flex justify-between items-center">
+                               <span className="flex items-center gap-1.5"><HiChartBar className="w-5 h-5 text-indigo-600" /> Ringkasan Nilai</span>
                               <div className="flex gap-2">
                                 {summary.class_name && (
                                   <span className="text-xs font-semibold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full">Kelas: {summary.class_name}</span>
@@ -759,7 +774,7 @@ export default function AdminGradesPage() {
                       }
                       className="w-full px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition flex items-center justify-center gap-2"
                     >
-                      <span className="text-xl">+</span>
+                      <HiPlus className="w-5 h-5" />
                       Tambah Nilai Baru
                     </button>
                   </div>

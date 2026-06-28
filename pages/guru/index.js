@@ -8,6 +8,7 @@ import Select from "../../components/atoms/Select";
 import Badge from "../../components/atoms/Badge";
 import * as api from "../../lib/api";
 import toast from "react-hot-toast";
+import { HiBookOpen } from "react-icons/hi2";
 
 const SimpleBarChart = ({ data }) => {
     const maxVal = Math.max(...data.map(d => d.value), 1);
@@ -55,9 +56,14 @@ export default function GuruDashboard() {
     ];
 
     useEffect(() => {
-        if (!authLoading && !isGuru) {
-            router.push("/login");
-        }
+        if (!authLoading) {
+      if (!user) {
+        router.replace("/login");
+      } else if (!isGuru) {
+        toast.error("Anda tidak memiliki akses ke halaman ini");
+        router.replace("/");
+      }
+    }
     }, [authLoading, isGuru, router]);
 
     useEffect(() => {
@@ -67,7 +73,6 @@ export default function GuruDashboard() {
     }, [isGuru, filters]);
 
     const loadData = async () => {
-        const toastId = toast.loading("Sedang memuat data...");
         try {
             setLoading(true);
             const params = {
@@ -84,10 +89,9 @@ export default function GuruDashboard() {
 
             setGrades(gradesRes.data?.data || gradesRes.data || []);
             setStudents(studentsRes.data?.data || studentsRes.data || []);
-            toast.success("Data berhasil dimuat", { id: toastId });
         } catch (error) {
             console.error("Error loading data:", error);
-            toast.error("Gagal memuat data", { id: toastId });
+            toast.error("Gagal memuat data");
         } finally {
             setLoading(false);
         }
@@ -140,7 +144,9 @@ export default function GuruDashboard() {
                         <p>Selamat datang, <span className="font-semibold text-gray-900">{user?.name}</span></p>
                         <div className="hidden md:block h-1 w-1 bg-gray-300 rounded-full"></div>
                         <div className="flex items-center gap-2">
-                            <Badge variant="primary" size="sm">📚 {user?.subject?.name || "Mapel"}</Badge>
+                            <Badge variant="primary" size="sm" className="flex items-center gap-1">
+                                <HiBookOpen className="w-3.5 h-3.5" /> {user?.subject?.name || "Mapel"}
+                            </Badge>
                             <span className="text-sm">{user?.email}</span>
                         </div>
                     </div>

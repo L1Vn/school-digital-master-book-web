@@ -6,12 +6,12 @@ import Loading from "../../components/atoms/Loading";
 import ErrorMessage from "../../components/atoms/ErrorMessage";
 import * as api from "../../lib/api";
 import toast from "react-hot-toast";
-import Swal from 'sweetalert2';
+import { HiBell, HiUser, HiGlobeAlt, HiClock, HiTrash, HiCheckCircle } from "react-icons/hi2";
 
 export default function AdminNotificationsPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
-  
+
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,14 +40,15 @@ export default function AdminNotificationsPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = {};
       if (filter !== "all") {
         params.status = filter;
       }
-      
+
       const response = await api.getNotifications(params);
-      setNotifications(response.data || []);
+      const data = response.data?.data || response.data || [];
+      setNotifications(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error loading notifications:", err);
       setError(err.message || "Gagal memuat notifikasi");
@@ -60,7 +61,7 @@ export default function AdminNotificationsPage() {
   async function loadUnreadCount() {
     try {
       const response = await api.getUnreadNotificationsCount();
-      setUnreadCount(response.data?.unread_count || 0);
+      setUnreadCount(response.unread_count || response.data?.unread_count || 0);
     } catch (err) {
       console.error("Error loading unread count:", err);
     }
@@ -79,48 +80,81 @@ export default function AdminNotificationsPage() {
   }
 
   async function handleMarkAllAsRead() {
-    const result = await Swal.fire({
-      title: 'Konfirmasi',
-      text: "Tandai semua notifikasi sebagai sudah dibaca?",
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Ya',
-      cancelButtonText: 'Batal'
-    });
-    if (!result.isConfirmed) return;
-
-    try {
-      await api.markAllNotificationsAsRead();
-      toast.success("Semua notifikasi ditandai sebagai sudah dibaca");
-      loadNotifications();
-      loadUnreadCount();
-    } catch (err) {
-      console.error("Error marking all as read:", err);
-      toast.error("Gagal menandai semua notifikasi");
-    }
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <p className="font-semibold text-gray-800">Tandai Semua Dibaca?</p>
+          <p className="text-sm text-gray-600">
+            Tandai semua notifikasi sebagai sudah dibaca?
+          </p>
+          <div className="flex gap-2 justify-end mt-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1.5 text-xs text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+            >
+              Batal
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  await api.markAllNotificationsAsRead();
+                  toast.success("Semua notifikasi ditandai sebagai sudah dibaca");
+                  loadNotifications();
+                  loadUnreadCount();
+                } catch (err) {
+                  console.error("Error marking all as read:", err);
+                  toast.error("Gagal menandai semua notifikasi");
+                }
+              }}
+              className="px-3 py-1.5 text-xs text-white bg-blue-600 rounded-lg hover:bg-blue-700 font-medium"
+            >
+              Ya
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 5000 }
+    );
   }
 
   async function handleDelete(id) {
-    const result = await Swal.fire({
-      title: 'Hapus Notifikasi?',
-      text: "Notifikasi ini akan dihapus permanen.",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      confirmButtonText: 'Hapus',
-      cancelButtonText: 'Batal'
-    });
-    if (!result.isConfirmed) return;
-
-    try {
-      await api.deleteNotification(id);
-      toast.success("Notifikasi berhasil dihapus");
-      loadNotifications();
-      loadUnreadCount();
-    } catch (err) {
-      console.error("Error deleting notification:", err);
-      toast.error("Gagal menghapus notifikasi");
-    }
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <p className="font-semibold text-gray-800">Hapus Notifikasi?</p>
+          <p className="text-sm text-gray-600">
+            Notifikasi ini akan dihapus permanen.
+          </p>
+          <div className="flex gap-2 justify-end mt-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1.5 text-xs text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+            >
+              Batal
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  await api.deleteNotification(id);
+                  toast.success("Notifikasi berhasil dihapus");
+                  loadNotifications();
+                  loadUnreadCount();
+                } catch (err) {
+                  console.error("Error deleting notification:", err);
+                  toast.error("Gagal menghapus notifikasi");
+                }
+              }}
+              className="px-3 py-1.5 text-xs text-white bg-red-600 rounded-lg hover:bg-red-700 font-medium"
+            >
+              Hapus
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 5000 }
+    );
   }
 
   function formatRelativeTime(dateString) {
@@ -135,7 +169,7 @@ export default function AdminNotificationsPage() {
     if (diffMins < 60) return `${diffMins} menit yang lalu`;
     if (diffHours < 24) return `${diffHours} jam yang lalu`;
     if (diffDays < 7) return `${diffDays} hari yang lalu`;
-    
+
     return date.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
@@ -178,9 +212,10 @@ export default function AdminNotificationsPage() {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+                className="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-semibold transition flex items-center gap-2"
               >
-                ✓ Tandai Semua Sudah Dibaca
+                <HiCheckCircle className="w-4 h-4" />
+                Tandai Semua Sudah Dibaca
               </button>
             )}
           </div>
@@ -227,8 +262,8 @@ export default function AdminNotificationsPage() {
       ) : error ? (
         <ErrorMessage message={error} onRetry={loadNotifications} />
       ) : notifications.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-soft p-12 text-center">
-          <div className="text-6xl mb-4">🔔</div>
+        <div className="bg-white rounded-xl shadow-soft p-12 text-center flex flex-col items-center">
+          <HiBell className="w-12 h-12 mb-4 text-primary" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">
             {filter === "all" ? "Belum Ada Notifikasi" : "Tidak Ada Notifikasi"}
           </h3>
@@ -281,18 +316,18 @@ export default function AdminNotificationsPage() {
                     <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                       {notification.triggered_by && (
                         <div className="flex items-center gap-1">
-                          <span>👤</span>
+                          <HiUser className="w-4 h-4" />
                           <span>{notification.triggered_by.name}</span>
                         </div>
                       )}
                       {notification.triggered_ip && (
                         <div className="flex items-center gap-1">
-                          <span>🌐</span>
+                          <HiGlobeAlt className="w-4 h-4" />
                           <span>{notification.triggered_ip}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-1">
-                        <span>🕐</span>
+                        <HiClock className="w-4 h-4" />
                         <span>{formatRelativeTime(notification.created_at)}</span>
                       </div>
                     </div>
@@ -303,18 +338,18 @@ export default function AdminNotificationsPage() {
                     {!notification.is_read && (
                       <button
                         onClick={() => handleMarkAsRead(notification.id)}
-                        className="px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition text-sm font-semibold"
+                        className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition text-sm font-semibold flex items-center gap-1"
                         title="Tandai sudah dibaca"
                       >
-                        ✓
+                        <HiCheckCircle className="w-4 h-4" />
                       </button>
                     )}
                     <button
                       onClick={() => handleDelete(notification.id)}
-                      className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-semibold"
+                      className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition text-sm font-semibold flex items-center gap-1"
                       title="Hapus"
                     >
-                      🗑️
+                      <HiTrash className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

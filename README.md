@@ -1,41 +1,47 @@
-# School Digital Master Book Web
+# 🏫 School Digital Master Book - Web Application
 
-Web Application frontend untuk sistem Buku Induk Digital. Dibangun menggunakan **Next.js 15**, **React 19**, dan **Tailwind CSS**. Aplikasi ini menyediakan antarmuka responsif, modern, dan role-based untuk Admin, Guru, Wali Kelas, Alumni, dan Publik.
+[![Next.js](https://img.shields.io/badge/Next.js-15.5-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-## 🚀 Teknologi utama
+Aplikasi frontend (Web) untuk sistem **Buku Induk Digital Sekolah**. Dibangun dengan **Next.js 15**, **React 19**, dan **Tailwind CSS**, mengimplementasikan arsitektur *Atomic Design*. Aplikasi ini menyediakan antarmuka modern, responsif, dan *role-based* untuk Admin, Guru, Wali Kelas, Alumni, dan Publik.
 
-- **Framework:** Next.js 15
-- **Library:** React 19
+---
+
+## 🚀 Teknologi Utama
+
+- **Framework:** Next.js 15.5 (Pages Router)
+- **Library Utama:** React 19.2
 - **Styling:** Tailwind CSS 3.4
-- **HTTP**: Fetch API
-- **Auth Handling:** `js-cookie` (Token Management)
-- **UI UX:** Design premium dengan transisi halus dan responsif.
+- **State & HTTP:** Fetch API terintegrasi dengan backend Laravel
+- **Auth Handling:** `js-cookie` untuk Token Management Sanctum
+- **UI & UX:** `react-hot-toast` untuk notifikasi yang elegan, `react-icons` untuk iconography.
 
 ## 🛠 Instalasi & Setup
 
-Pastikan Node.js (versi LTS terbaru) telah terinstal di komputer Anda.
+Pastikan **Node.js (LTS terbaru)** telah terinstal di sistem Anda.
 
 1. **Clone Repository**
-
    ```bash
    git clone https://github.com/L1Vn/school-digital-master-book-web.git
    cd school-digital-master-book-web
    ```
 
 2. **Install Dependencies**
-
    ```bash
    npm install
    ```
 
 3. **Konfigurasi Environment**
    Buat file `.env.local` di root folder project:
-
+   ```bash
+   cp .env.local.example .env.local # Jika ada
+   ```
+   Atau buat secara manual dan isi:
    ```env
    NEXT_PUBLIC_API_URL=http://localhost:8000/api
    ```
-
-   _Sesuaikan URL API dengan alamat backend Laravel Anda._
+   *(Sesuaikan URL API dengan alamat backend Laravel Anda).*
 
 4. **Jalankan Development Server**
    ```bash
@@ -43,70 +49,71 @@ Pastikan Node.js (versi LTS terbaru) telah terinstal di komputer Anda.
    ```
    Buka browser dan akses [http://localhost:3000](http://localhost:3000).
 
-## 📱 Fitur & Modul
+---
 
-### 1. Public Page (Landing)
+## 📱 Modul & Role Access
 
-- Halaman depan yang dapat diakses siapa saja.
-- Fitur **Pencarian Data** (Siswa & Alumni) berdasarkan Nomor Induk.
+Sistem ini memiliki berbagai *dashboard* yang disesuaikan dengan *role* pengguna:
 
-### 2. Login System
+### 1. 🌐 Public Page (Landing - `/`)
+- Halaman beranda interaktif yang dapat diakses siapa saja.
+- Fitur **Pencarian Data (Siswa & Alumni)** berdasarkan Nomor Induk (NIS/NIM).
 
-- Single Entry Point (`/login`) untuk semua role.
-- Redireksi otomatis ke dashboard yang sesuai berdasarkan role user (Admin/Guru/Wali/Alumni).
+### 2. 🔐 Login System (`/login`)
+- *Single Entry Point* untuk semua pengguna.
+- Penanganan autentikasi JWT dan redireksi otomatis ke *dashboard* masing-masing role (Admin / Guru / Walikelas / Alumni).
 
-### 3. Dashboard Admin (`/admin`)
+### 3. 👑 Dashboard Admin (`/admin/*`)
+- **Master Data:** Manajemen entitas utama seperti Siswa, Alumni, Pengguna (User), Mata Pelajaran (Subjects), Kelas, dan Tahun Ajaran.
+- **Grades:** Manajemen nilai keseluruhan.
+- **Notifications:** Kotak masuk (*inbox*) notifikasi pembaruan data dari Alumni.
 
-- **Master Data:** Kelola data Siswa, Alumni, Mata Pelajaran, dan User.
-- **Grades:** Manajemen nilai semua siswa.
-- **Notifications:** Inbox notifikasi jika ada Alumni yang mengupdate data profilnya.
+### 4. 👨‍🏫 Dashboard Guru (`/guru/*`)
+- **My Grades:** Guru hanya memiliki hak akses untuk menginput dan mengedit nilai pada mata pelajaran yang ditugaskan kepadanya.
 
-### 4. Dashboard Guru (`/guru`)
+### 5. 👔 Dashboard Wali Kelas (`/walikelas/*`)
+- **Class Data:** Melihat detail dan daftar siswa di kelas binaannya.
+- **Input Nilai:** Hak akses sekunder (backup) untuk input nilai bagi seluruh mata pelajaran di kelasnya.
+- **Rekap Nilai:** Memantau rekapitulasi nilai total dan rata-rata siswa per semester.
 
-- **My Grades:** Guru hanya dapat menginput dan mengedit nilai untuk mata pelajaran yang ditugaskan kepadanya.
+### 6. 🎓 Dashboard Alumni (`/alumni/*`)
+- **Profile Update:** Alumni dapat memperbarui data pendidikan lanjutan (Universitas), pekerjaan (Karir), dan kontak/sosial media.
+- Perubahan yang dilakukan akan langsung memicu notifikasi ke Admin untuk dilakukan proses validasi.
 
-### 5. Dashboard Wali Kelas (`/walikelas`)
+---
 
-- **Class Data:** Melihat daftar siswa di kelas yang diampu.
-- **Input Nilai:** Hak akses input nilai untuk **semua** mata pelajaran bagi siswa di kelasnya (backup jika guru berhalangan).
-- **Rekap Nilai:** Melihat total nilai dan rata-rata siswa per semester.
+## 📂 Struktur Proyek (Atomic Design)
 
-### 6. Dashboard Alumni (`/alumni`)
-
-- **Profile Update:** Alumni dapat memperbarui data pekerjaan, universitas, dan kontak sosial media. Perubahan ini akan memicu notifikasi ke Admin untuk ditinjau.
-
-## 📂 Struktur Project
+Aplikasi ini menggunakan pola **Atomic Design** pada komponen UI-nya agar lebih terstruktur dan *reusable*.
 
 ```bash
-pages/
-├── index.js          # Landing page (Search Publik)
-├── login.js          # Halaman Login
-├── admin/            # Route khusus Admin (Protected)
-│   ├── alumni.js
-│   ├── students.js
-│   ├── subjects.js
-│   ├── users.js
-│   └── grades.js
-├── guru/             # Route khusus Guru
-│   └── index.js
-├── walikelas/        # Route khusus Wali Kelas
-│   ├── index.js
-│   └── students.js
-└── alumni/           # Route khusus Alumni
-    └── profile.js
-components/           # Komponen UI Reusable
-├── Layout.js         # Layout utama (Sidebar/Navbar)
-├── Sidebar.js        # Navigasi Menu
-└── ...
+school-digital-master-book-web/
+├── components/          # Komponen UI menggunakan Atomic Design
+│   ├── atoms/           # Komponen dasar (Button, Input, Badge, dll)
+│   ├── molecules/       # Gabungan atoms (FormGroup, SearchBar, Card)
+│   ├── organisms/       # Gabungan molecules (Navbar, Sidebar, Table)
+│   └── templates/       # Struktur layout halaman (AdminLayout, dll)
+├── pages/               # Routing Next.js (Pages Router)
+│   ├── _app.js          # Main App Component (Global Styles, Toast config)
+│   ├── index.js         # Landing Page
+│   ├── login.js         # Halaman Login
+│   ├── 404.js           # Custom Error Page
+│   ├── admin/           # Folder routing khusus Admin
+│   ├── alumni/          # Folder routing khusus Alumni
+│   ├── guru/            # Folder routing khusus Guru
+│   └── walikelas/       # Folder routing khusus Walikelas
+├── public/              # Aset statis (Gambar, Icon, dll)
+├── styles/              # Global CSS (Tailwind imports)
+├── tailwind.config.js   # Konfigurasi Tailwind CSS
+└── package.json         # Dependensi & Scripts
 ```
 
-## 🎨 Design System
+## 🎨 Design System & UX
 
-Project ini menggunakan Tailwind CSS dengan pendekatan desain yang bersih dan _sophisticated_.
-
-- **Warna:** Menggunakan palet warna modern yang nyaman di mata.
-- **Interaksi:** Hover effects, modal animations, dan loading states yang informatif.
+- **Tailwind CSS:** Digunakan secara ekstensif untuk styling yang *utility-first* dan mudah disesuaikan.
+- **Responsif:** Antarmuka disesuaikan untuk tampil sempurna baik di Desktop maupun Mobile.
+- **Micro-interactions:** Efek *hover*, transisi *smooth*, dan status *loading* yang informatif untuk pengalaman pengguna premium.
+- **Notifikasi:** `react-hot-toast` digunakan untuk memberikan *feedback* visual (Sukses/Error) pada setiap aksi pengguna secara *real-time*.
 
 ## 📜 Lisensi
-
 Developed for internal use.

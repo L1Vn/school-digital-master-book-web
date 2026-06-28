@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Header from "../../components/organisms/layout/Header";
-import Swal from 'sweetalert2';
+import toast from "react-hot-toast";
 
 export default function AlumniDetail() {
   const router = useRouter();
@@ -24,13 +24,8 @@ export default function AlumniDetail() {
     const found = students.find((s) => s.nisn === nisn);
 
     if (!found) {
-      Swal.fire({
-        title: "Error",
-        text: "Data alumni tidak ditemukan!",
-        icon: "error"
-      }).then(() => {
-        router.replace("/login");
-      });
+      toast.error("Data alumni tidak ditemukan!");
+      router.replace("/login");
       return;
     }
 
@@ -45,11 +40,7 @@ export default function AlumniDetail() {
     );
 
     localStorage.setItem("students_data", JSON.stringify(updated));
-    Swal.fire({
-      title: "Sukses",
-      text: "Data berhasil diperbarui!",
-      icon: "success"
-    });
+    toast.success("Data berhasil diperbarui!");
   }
 
   if (!form) return <p className="p-10 text-center">Memuat data...</p>;

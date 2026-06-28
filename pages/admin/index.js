@@ -7,6 +7,18 @@ import ErrorMessage from "../../components/atoms/ErrorMessage";
 import * as api from "../../lib/api";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { 
+  HiHandRaised, 
+  HiUserGroup, 
+  HiAcademicCap, 
+  HiBookOpen, 
+  HiBell, 
+  HiEnvelopeOpen, 
+  HiEnvelope, 
+  HiPlus, 
+  HiDocumentText, 
+  HiUsers 
+} from "react-icons/hi2";
 
 // ========================
 // STATS CARD COMPONENT
@@ -23,7 +35,7 @@ function StatsCard({ icon, label, value, href, color, badge }) {
           </div>
         )}
         <div className="flex items-center gap-4">
-          <div className="text-5xl group-hover:scale-110 transition-transform">
+          <div className="group-hover:scale-110 transition-transform">
             {icon}
           </div>
           <div>
@@ -58,12 +70,12 @@ function NotificationCard({ notification, onClick }) {
       onClick={onClick}
       className={`p-4 rounded-xl border transition-all cursor-pointer hover:shadow-md ${
         !notification.is_read
-          ? "bg-blue-50 border-blue-200 hover:bg-blue-100"
+          ? "bg-primary/5 border-primary/20 hover:bg-primary/10"
           : "bg-white border-gray-200 hover:bg-gray-50"
       }`}
     >
-      <div className="flex gap-3">
-        <div className="text-2xl">{notification.is_read ? "📬" : "📭"}</div>
+      <div className="flex gap-3 items-center">
+        <div>{notification.is_read ? <HiEnvelopeOpen className="w-6 h-6 text-gray-400" /> : <HiEnvelope className="w-6 h-6 text-primary" />}</div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
             {notification.message}
@@ -73,7 +85,7 @@ function NotificationCard({ notification, onClick }) {
           </p>
         </div>
         {!notification.is_read && (
-          <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1"></div>
+          <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1"></div>
         )}
       </div>
     </div>
@@ -87,7 +99,7 @@ function ActionCard({ icon, title, description, href }) {
   return (
     <Link href={href} className="block group">
       <div className="bg-white rounded-xl p-5 shadow-soft hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-primary/30 group-hover:scale-[1.02] h-full">
-        <div className="text-3xl mb-3 group-hover:scale-110 transition-transform inline-block">
+        <div className="group-hover:scale-110 transition-transform inline-block">
           {icon}
         </div>
         <h3 className="font-bold text-base text-gray-900 mb-1">{title}</h3>
@@ -117,11 +129,13 @@ export default function AdminDashboard() {
 
   // Cek otorisasi
   useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      if (user) {
+    if (!authLoading) {
+      if (!user) {
+        router.replace("/login");
+      } else if (!isAdmin) {
         toast.error("Anda tidak memiliki akses ke halaman ini");
+        router.replace("/");
       }
-      router.replace("/");
     }
   }, [authLoading, isAdmin, user, router]);
 
@@ -181,8 +195,8 @@ export default function AdminDashboard() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Dashboard Admin
         </h1>
-        <p className="text-gray-600">
-          Selamat datang kembali, {user?.name || "Admin"}! 👋
+        <p className="text-gray-600 flex items-center gap-1.5">
+          Selamat datang kembali, {user?.name || "Admin"}! <HiHandRaised className="w-5 h-5 text-amber-500" />
         </p>
       </div>
 
@@ -195,32 +209,32 @@ export default function AdminDashboard() {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatsCard
-              icon="👨‍🎓"
+              icon={<HiUserGroup className="w-12 h-12 text-white" />}
               label="Total Siswa"
               value={stats.students}
               href="/admin/students"
-              color="bg-gradient-to-br from-blue-500 to-blue-600 text-white"
+              color="bg-gradient-to-br from-primary to-primary-600 text-white"
             />
             <StatsCard
-              icon="🎓"
+              icon={<HiAcademicCap className="w-12 h-12 text-white" />}
               label="Total Alumni"
               value={stats.alumni}
               href="/admin/alumni"
-              color="bg-gradient-to-br from-purple-500 to-purple-600 text-white"
+              color="bg-gradient-to-br from-accent to-accent-600 text-white"
             />
             <StatsCard
-              icon="📚"
+              icon={<HiBookOpen className="w-12 h-12 text-white" />}
               label="Mata Pelajaran"
               value={stats.subjects}
               href="/admin/subjects"
-              color="bg-gradient-to-br from-green-500 to-green-600 text-white"
+              color="bg-gradient-to-br from-emerald-500 to-teal-600 text-white"
             />
             <StatsCard
-              icon="🔔"
+              icon={<HiBell className="w-12 h-12 text-white" />}
               label="Notifikasi"
               value={stats.unreadNotifications}
               href="/admin/notifications"
-              color="bg-gradient-to-br from-orange-500 to-orange-600 text-white"
+              color="bg-gradient-to-br from-orange-500 to-amber-600 text-white"
               badge={stats.unreadNotifications > 0 ? "Baru" : null}
             />
           </div>
@@ -242,8 +256,8 @@ export default function AdminDashboard() {
                 </div>
 
                 {recentNotifications.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="text-5xl mb-3">📭</div>
+                  <div className="text-center py-12 flex flex-col items-center justify-center">
+                    <HiEnvelopeOpen className="text-5xl text-gray-300 mb-3" />
                     <p className="text-gray-500">Belum ada notifikasi</p>
                   </div>
                 ) : (
@@ -268,19 +282,19 @@ export default function AdminDashboard() {
                 </h2>
                 <div className="grid grid-cols-1 gap-3">
                   <ActionCard
-                    icon="➕"
+                    icon={<HiPlus className="w-6 h-6 text-primary mb-2" />}
                     title="Tambah Siswa"
                     description="Input data siswa baru"
                     href="/admin/students"
                   />
                   <ActionCard
-                    icon="📝"
+                    icon={<HiDocumentText className="w-6 h-6 text-primary mb-2" />}
                     title="Input Nilai"
                     description="Kelola raport siswa"
                     href="/admin/grades"
                   />
                   <ActionCard
-                    icon="👥"
+                    icon={<HiUsers className="w-6 h-6 text-primary mb-2" />}
                     title="Kelola User"
                     description="Atur hak akses pengguna"
                     href="/admin/users"
@@ -291,7 +305,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* System Info */}
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl shadow-soft p-8 text-white">
+          <div className="bg-gradient-to-r from-primary to-accent rounded-2xl shadow-soft p-8 text-white">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <h3 className="text-2xl font-bold mb-2">

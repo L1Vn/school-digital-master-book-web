@@ -8,6 +8,7 @@ import Button from "../../components/atoms/Button";
 import Badge from "../../components/atoms/Badge";
 import * as api from "../../lib/api";
 import toast from "react-hot-toast";
+import { HiAcademicCap, HiEnvelope, HiPresentationChartBar, HiUserGroup, HiMagnifyingGlass, HiArrowPath, HiTrophy, HiBolt } from "react-icons/hi2";
 
 export default function WaliKelasDashboard() {
   const { user, isWaliKelas, loading: authLoading } = useAuth();
@@ -19,11 +20,13 @@ export default function WaliKelasDashboard() {
   const [summaries, setSummaries] = useState([]);
 
   useEffect(() => {
-    if (!authLoading && !isWaliKelas) {
-      if (user) {
+    if (!authLoading) {
+      if (!user) {
+        router.replace("/login");
+      } else if (!isWaliKelas) {
         toast.error("Anda tidak memiliki akses ke halaman ini");
+        router.replace("/");
       }
-      router.replace("/");
     }
   }, [authLoading, isWaliKelas, user, router]);
 
@@ -149,11 +152,11 @@ export default function WaliKelasDashboard() {
             Selamat datang, <span className="font-semibold">{user?.name}</span>
           </p>
           <div className="mt-2 flex flex-wrap gap-2 items-center">
-            <Badge variant="primary" size="lg">
-              🏫 Kelas {user?.class || "-"}
+            <Badge variant="primary" size="lg" className="flex items-center gap-1.5">
+              <HiAcademicCap className="w-4 h-4" /> Kelas {user?.class || "-"}
             </Badge>
-            <Badge variant="secondary" size="lg">
-              📧 {user?.email}
+            <Badge variant="secondary" size="lg" className="flex items-center gap-1.5">
+              <HiEnvelope className="w-4 h-4" /> {user?.email}
             </Badge>
           </div>
           <p className="text-sm text-gray-500 mt-2">
@@ -210,8 +213,8 @@ export default function WaliKelasDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Distribusi Nilai */}
           <Card>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              📊 Distribusi Nilai
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <HiPresentationChartBar className="w-5 h-5 text-primary" /> Distribusi Nilai
             </h3>
             <div className="space-y-3">
               {stats.gradeDistribution.map((item, idx) => {
@@ -243,8 +246,8 @@ export default function WaliKelasDashboard() {
 
           {/* Top 5 Siswa */}
           <Card>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              🏆 Top 5 Siswa Berprestasi
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <HiTrophy className="w-5 h-5 text-yellow-500" /> Top 5 Siswa Berprestasi
             </h3>
             {stats.studentAverages.length > 0 ? (
               <div className="space-y-3">
@@ -282,33 +285,34 @@ export default function WaliKelasDashboard() {
 
         {/* Aksi Cepat */}
         <Card>
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
-            ⚡ Aksi Cepat
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <HiBolt className="w-5 h-5 text-amber-500 animate-pulse" /> Aksi Cepat
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button
               variant="primary"
               size="lg"
               onClick={() => router.push("/walikelas/siswa")}
-              className="w-full"
+              className="w-full flex items-center justify-center gap-2"
             >
-              👨‍🎓 Kelola Data Siswa
+              <HiUserGroup className="w-5 h-5" /> Kelola Data Siswa
             </Button>
             <Button
               variant="secondary"
               size="lg"
               onClick={() => router.push("/")}
-              className="w-full"
+              className="w-full flex items-center justify-center gap-2"
             >
-              🔍 Data Publik
+              <HiMagnifyingGlass className="w-5 h-5" /> Data Publik
             </Button>
             <Button
               variant="ghost"
               size="lg"
               onClick={loadData}
-              className="w-full"
+              loading={loading}
+              className="w-full flex items-center justify-center gap-2"
             >
-              🔄 Refresh Data
+              <HiArrowPath className="w-5 h-5" /> Refresh Data
             </Button>
           </div>
         </Card>
