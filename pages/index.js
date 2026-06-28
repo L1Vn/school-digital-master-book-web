@@ -93,7 +93,17 @@ export default function PublicHome() {
               <div className="w-24 h-10 bg-gray-200 rounded-xl animate-pulse"></div>
             ) : user ? (
               <Link
-                href="/login"
+                href={
+                  user.role === "admin"
+                    ? "/admin"
+                    : user.role === "guru"
+                    ? "/guru"
+                    : user.role === "wali_kelas"
+                    ? "/walikelas"
+                    : user.role === "alumni"
+                    ? "/alumni/profile"
+                    : "/login"
+                }
                 className="px-6 py-2.5 bg-white border border-gray-200 text-gray-800 rounded-xl font-semibold shadow-sm hover:shadow-md hover:bg-gray-50 transition-all duration-300 flex items-center gap-3"
               >
                 <div className="text-right hidden sm:block">
@@ -221,9 +231,9 @@ export default function PublicHome() {
             {/* Grid Siswa */}
             {activeTab === "students" && (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredStudents.map((student) => (
+                {filteredStudents.map((student, idx) => (
                   <StudentCard
-                    key={student.nis}
+                    key={student.nis || student.id || `student-${idx}`}
                     student={student}
                     isPublic={true}
                   />
@@ -253,8 +263,8 @@ export default function PublicHome() {
             {/* Grid Alumni */}
             {activeTab === "alumni" && (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredAlumni.map((a) => (
-                  <AlumniCard key={a.nim} alumni={a} isPublic={true} />
+                {filteredAlumni.map((a, idx) => (
+                  <AlumniCard key={a.nim || a.id || `alumni-${idx}`} alumni={a} isPublic={true} />
                 ))}
                 {filteredAlumni.length === 0 && (
                   <div className="col-span-full text-center py-12 text-gray-500">
