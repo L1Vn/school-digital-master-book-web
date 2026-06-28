@@ -86,12 +86,12 @@ export default function StudentCard({
           {!isPublic && (
             <>
               {/* Rombel */}
-              {student?.rombel_absen && (
+              {student?.classroom && (
                 <div className="flex items-start gap-3">
                   <span className="text-gray-400 mt-0.5 text-lg">🏫</span>
                   <div>
                     <p className="text-sm text-gray-800 font-medium leading-snug">
-                      {student?.rombel_absen}
+                      {student.classroom.name}-{student.absen_number}
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">Rombel Absen</p>
                   </div>

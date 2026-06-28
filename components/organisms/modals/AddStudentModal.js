@@ -9,6 +9,7 @@ export default function AddStudentModal({
   onClose,
   onSave,
   students = [],
+  classrooms = [],
 }) {
   const [form, setForm] = useState({
     nis: "",
@@ -20,7 +21,7 @@ export default function AddStudentModal({
     religion: "Islam",
     father_name: "",
     address: "",
-    rombel_absen: "",
+    classroom_id: classrooms?.[0]?.id || "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -38,7 +39,7 @@ export default function AddStudentModal({
         religion: "Islam",
         father_name: "",
         address: "",
-        rombel_absen: "",
+        classroom_id: "",
       });
       setError("");
     }
@@ -82,6 +83,11 @@ export default function AddStudentModal({
   const genderOptions = [
     { value: "L", label: "Laki-laki" },
     { value: "P", label: "Perempuan" },
+  ];
+
+  const classroomOptions = [
+    { value: "", label: "Pilih Kelas" },
+    ...classrooms.map((c) => ({ value: c.id, label: c.name })),
   ];
 
   return (
@@ -169,12 +175,12 @@ export default function AddStudentModal({
           required
         />
 
-        <Input
-          label="Rombel & Absen *"
-          name="rombel_absen"
-          value={form.rombel_absen}
+        <Select
+          label="Kelas *"
+          name="classroom_id"
+          value={form.classroom_id}
           onChange={handleChange}
-          placeholder="Contoh: X-1-01"
+          options={classroomOptions}
           required
         />
 

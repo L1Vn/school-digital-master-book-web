@@ -10,6 +10,7 @@ export default function EditStudentModal({
   onClose,
   onSave,
   students = [],
+  classrooms = [],
 }) {
   const [form, setForm] = useState({
     nis: "",
@@ -22,7 +23,7 @@ export default function EditStudentModal({
     father_name: "",
     address: "",
     ijazah_number: "",
-    rombel_absen: "",
+    classroom_id: "",
     status: "siswa",
   });
   const [loading, setLoading] = useState(false);
@@ -48,7 +49,7 @@ export default function EditStudentModal({
         father_name: student.father_name || "",
         address: student.address || "",
         ijazah_number: student.ijazah_number || "",
-        rombel_absen: student.rombel_absen || "",
+        classroom_id: student.classroom_id || "",
         status: student.status || (student.ijazah_number ? "alumni" : "siswa"),
       });
       setError("");
@@ -96,6 +97,11 @@ export default function EditStudentModal({
   const statusOptions = [
     { value: "siswa", label: "Siswa Aktif" },
     { value: "alumni", label: "Alumni" },
+  ];
+
+  const classroomOptions = [
+    { value: "", label: "Pilih Kelas" },
+    ...classrooms.map((c) => ({ value: c.id, label: c.name })),
   ];
 
   return (
@@ -192,16 +198,19 @@ export default function EditStudentModal({
               onChange={handleChange}
             />
           )}
-          <Input
-            label="Rombel & Absen *"
-            name="rombel_absen"
-            value={form.status === 'alumni' ? '-' : form.rombel_absen}
+        </div>
+
+        {form.status !== 'alumni' && (
+          <Select
+            label="Kelas *"
+            name="classroom_id"
+            value={form.classroom_id}
             onChange={handleChange}
-            placeholder="Contoh: X-1-01"
+            options={classroomOptions}
             required={form.status !== 'alumni'}
             disabled={form.status === 'alumni'}
           />
-        </div>
+        )}
 
         <Select
           label="Status"
