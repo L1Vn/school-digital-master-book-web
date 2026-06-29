@@ -141,7 +141,7 @@ export default function AdminGradesPage() {
     return Array.from(
       new Set(
         students
-          .map((s) => s.classroom?.name)
+          .map((s) => s.class)
           .filter(Boolean)
       )
     ).sort();
@@ -171,7 +171,7 @@ export default function AdminGradesPage() {
     return studentsWithGrades.filter((student) => {
       // Filter by class
       if (filters.class) {
-        const studentClass = student.classroom?.name;
+        const studentClass = student.class;
         if (studentClass !== filters.class) return false;
       }
 
@@ -210,7 +210,7 @@ export default function AdminGradesPage() {
 
     const combinations = new Set();
     studentGrades.forEach((g) => {
-      const studentClass = student?.classroom?.name || "N/A";
+      const studentClass = student?.class || "N/A";
       const year = academicYears.find(y => y.id == g.academic_year_id);
       const yearName = year ? year.name : "N/A";
       combinations.add(`${studentClass}|${g.academic_year_id}|${g.semester}|${yearName}`);
@@ -554,7 +554,7 @@ export default function AdminGradesPage() {
                           {student.name}
                         </h3>
                         <p className="text-gray-500 text-sm">
-                          {student.nis} • {student.classroom ? student.classroom.name : "N/A"}
+                          {student.nis} • {student.class || "N/A"}
                         </p>
                       </div>
                     </div>
@@ -735,18 +735,7 @@ export default function AdminGradesPage() {
                               </div>
                             </div>
                             <div className="flex justify-between items-center border-t border-indigo-100 pt-3">
-                              <div className="flex gap-4">
-                                <div>
-                                  <span className="text-sm text-gray-500 mr-2">GPA:</span>
-                                  <span className="font-bold text-gray-800">{summary.grade_point_average || "-"}</span>
-                                </div>
-                                <div>
-                                  <span className="text-sm text-gray-500 mr-2">Status:</span>
-                                  <span className={`font-bold ${summary.status === 'Lulus' ? 'text-green-600' : 'text-red-600'}`}>
-                                    {summary.status || "-"}
-                                  </span>
-                                </div>
-                              </div>
+
                               {summary.calculated_at && (
                                   <p className="text-xs text-gray-400">
                                   Diperbarui: {new Date(summary.calculated_at).toLocaleString('id-ID')}
