@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "../hooks/useAuth";
 import { HiEnvelope, HiLockClosed, HiEye, HiEyeSlash, HiArrowLeft } from "react-icons/hi2";
 
-const API_URL = "http://localhost:8000";
+const API_URL = "http://127.0.0.1:8000";
 
 export default function Login() {
   const router = useRouter();

@@ -39,7 +39,7 @@ Pastikan **Node.js (LTS terbaru)** telah terinstal di sistem Anda.
    ```
    Atau buat secara manual dan isi:
    ```env
-   NEXT_PUBLIC_API_URL=http://localhost:8000/api
+   NEXT_LOCAL_API_URL=http://127.0.0.1:8000/api
    ```
    *(Sesuaikan URL API dengan alamat backend Laravel Anda).*
 
@@ -47,7 +47,7 @@ Pastikan **Node.js (LTS terbaru)** telah terinstal di sistem Anda.
    ```bash
    npm run dev
    ```
-   Buka browser dan akses [http://localhost:3000](http://localhost:3000).
+   Buka browser dan akses [http://127.0.0.1:3000](http://127.0.0.1:3000).
 
 ---
 
