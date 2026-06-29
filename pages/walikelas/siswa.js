@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "../../hooks/useAuth";
 import DashboardLayout from "../../components/templates/DashboardLayout";
@@ -10,7 +10,7 @@ import Badge from "../../components/atoms/Badge";
 import Modal from "../../components/molecules/Modal";
 import * as api from "../../lib/api";
 import toast from "react-hot-toast";
-import { HiUser, HiDocumentText, HiPencil, HiTrash, HiXMark, HiPlus, HiCheck, HiTrophy } from "react-icons/hi2";
+import { HiUser, HiDocumentText, HiPencil, HiTrash, HiXMark, HiPlus, HiCheck, HiTrophy, HiChartBar } from "react-icons/hi2";
 
 export default function WaliKelasSiswaPage() {
   const { user, isWaliKelas, loading: authLoading } = useAuth();
@@ -34,6 +34,12 @@ export default function WaliKelasSiswaPage() {
   const [subjects, setSubjects] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [loadingGrades, setLoadingGrades] = useState(false);
+
+  // State untuk tabs dan summary
+  const [studentSemesters, setStudentSemesters] = useState([]);
+  const [activeSemesterTab, setActiveSemesterTab] = useState(null);
+  const [summaryData, setSummaryData] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
   // State untuk form input nilai
   const [showAddGradeForm, setShowAddGradeForm] = useState(false);
@@ -139,13 +145,55 @@ export default function WaliKelasSiswaPage() {
       }
 
       setStudentGrades(gradesData);
+      
+      // Calculate semesters for tabs
+      const combinations = new Set();
+      gradesData.forEach((g) => {
+        const year = academicYears.find(y => y.id == g.academic_year_id);
+        const yearName = year ? year.name : "N/A";
+        combinations.add(`${g.academic_year_id}|${g.semester}|${yearName}`);
+      });
+      const semesters = Array.from(combinations);
+      setStudentSemesters(semesters);
+
+      if (semesters.length > 0) {
+        const firstTab = semesters[0];
+        setActiveSemesterTab(firstTab);
+        const [yearId, semester] = firstTab.split("|");
+        loadSummaryForStudent(nis, yearId, semester);
+      } else {
+        setActiveSemesterTab(null);
+        setSummaryData(null);
+      }
     } catch (error) {
       toast.error("Gagal memuat nilai siswa");
       setStudentGrades([]);
+      setStudentSemesters([]);
+      setActiveSemesterTab(null);
+      setSummaryData(null);
     } finally {
       setLoadingGrades(false);
     }
   };
+
+  const loadSummaryForStudent = async (studentId, yearId, semester) => {
+    if (!studentId || !yearId || !semester) return;
+    try {
+      setLoadingSummary(true);
+      const res = await api.getClassSummary(studentId, yearId, semester);
+      if (res.success && res.data) {
+        setSummaryData(res.data);
+      } else {
+        setSummaryData(null);
+      }
+    } catch (err) {
+      console.error(err);
+      setSummaryData(null);
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
 
   const handleSearch = () => {
     if (!searchNIS.trim()) {
@@ -394,20 +442,13 @@ export default function WaliKelasSiswaPage() {
     });
   };
 
-  // Hitung total dan rata-rata nilai
-  const calculateGradeSummary = () => {
-    if (studentGrades.length === 0) {
-      return { total: 0, average: 0 };
-    }
-    const total = studentGrades.reduce(
-      (sum, g) => sum + parseFloat(g.score || 0),
-      0,
-    );
-    const average = (total / studentGrades.length).toFixed(2);
-    return { total: total.toFixed(2), average };
-  };
+  // Filter grades by active semester tab
+  const filteredGrades = useMemo(() => {
+    if (!activeSemesterTab) return studentGrades;
+    const [yearId, semester] = activeSemesterTab.split("|");
+    return studentGrades.filter(g => g.academic_year_id == yearId && g.semester === semester);
+  }, [studentGrades, activeSemesterTab]);
 
-  const gradeSummary = calculateGradeSummary();
 
   // Filter subjects yang belum ada nilainya di semester yang dipilih
   const getAvailableSubjects = () => {
@@ -506,7 +547,7 @@ export default function WaliKelasSiswaPage() {
                     NIS: {selectedStudent.nis} | NISN: {selectedStudent.nisn}
                   </p>
                   <Badge variant="primary" className="mt-1">
-                    {selectedStudent.classroom ? selectedStudent.classroom.name : user?.class}
+                    {selectedStudent.class || user?.class}
                   </Badge>
                 </div>
               </div>
@@ -574,7 +615,7 @@ export default function WaliKelasSiswaPage() {
                     {student.gender === "L" ? "L" : "P"}
                   </Badge>
                   <Badge variant="ghost" size="sm">
-                    {student.classroom ? student.classroom.name : "-"}
+                    {student.class || "-"}
                   </Badge>
                 </div>
               </div>
@@ -615,7 +656,7 @@ export default function WaliKelasSiswaPage() {
                     {isEditingStudent ? studentForm.name : selectedStudent.name}
                   </h3>
                   <p className="text-gray-600">
-                    {selectedStudent.classroom ? selectedStudent.classroom.name : user?.class}
+                    {selectedStudent.class || user?.class}
                   </p>
                 </div>
               </div>
@@ -893,7 +934,7 @@ export default function WaliKelasSiswaPage() {
                   </h4>
                   <p className="text-sm text-gray-600">
                     NIS: {selectedStudent.nis} | Kelas:{" "}
-                    {selectedStudent.classroom ? selectedStudent.classroom.name : user?.class}
+                    {selectedStudent.class || user?.class}
                   </p>
                 </div>
                 <Button
@@ -1053,34 +1094,81 @@ export default function WaliKelasSiswaPage() {
               </Card>
             )}
 
+            {/* Tabs Semester */}
+            {studentSemesters.length > 0 && (
+              <div className="flex border-b border-gray-200 overflow-x-auto hide-scrollbar mb-4">
+                {studentSemesters.map((semesterStr) => {
+                  const [yearId, sem, yearName] = semesterStr.split("|");
+                  const isActive = activeSemesterTab === semesterStr;
+                  const label = `${yearName} - ${sem === 'odd' ? 'Ganjil' : sem === 'even' ? 'Genap' : sem}`;
+                  return (
+                    <button
+                      key={semesterStr}
+                      onClick={() => {
+                        setActiveSemesterTab(semesterStr);
+                        loadSummaryForStudent(selectedStudent?.nis, yearId, sem);
+                      }}
+                      className={`whitespace-nowrap py-3 px-5 text-sm font-medium border-b-2 transition-colors ${
+                        isActive
+                          ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Summary */}
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="bg-blue-50">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">
-                    {gradeSummary.total}
+            {loadingSummary ? (
+              <Loading text="Memuat ringkasan..." />
+            ) : summaryData ? (
+              <div className="bg-gradient-to-br from-indigo-50/50 to-purple-50/50 rounded-xl p-6 shadow-sm mb-6">
+                <h4 className="text-lg font-bold text-gray-900 mb-4 flex justify-between items-center">
+                  <span className="flex items-center gap-1.5"><HiChartBar className="w-5 h-5 text-indigo-600" /> Ringkasan Nilai</span>
+                  <div className="flex gap-2">
+                    {summaryData.class_name && (
+                      <span className="text-xs font-semibold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full">Kelas: {summaryData.class_name}</span>
+                    )}
+                    <span className="text-xs font-medium text-gray-600 bg-white px-3 py-1 rounded-full shadow-sm">Sem: {summaryData.semester === 'odd' ? 'Ganjil' : summaryData.semester === 'even' ? 'Genap' : summaryData.semester}</span>
                   </div>
-                  <div className="text-sm text-gray-600">Total Nilai</div>
-                </div>
-              </Card>
-              <Card className="bg-green-50">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">
-                    {gradeSummary.average}
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <p className="text-sm text-gray-500 font-medium mb-1">Total Nilai</p>
+                    <p className="text-2xl font-bold text-indigo-600">{summaryData.total_score}</p>
                   </div>
-                  <div className="text-sm text-gray-600">Rata-rata</div>
-                </div>
-              </Card>
-            </div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <p className="text-sm text-gray-500 font-medium mb-1">Rata-rata</p>
+                    <p className="text-2xl font-bold text-indigo-600">{summaryData.average_score}</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <p className="text-sm text-gray-500 font-medium mb-1">Nilai Tertinggi</p>
+                    <div className="flex items-end gap-2">
+                        <p className="text-2xl font-bold text-green-600">{summaryData.highest_score || 0}</p>
+                        <p className="text-xs text-gray-400 mb-1 truncate max-w-[80px]" title={summaryData.highest_subject || '-'}>{summaryData.highest_subject || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <p className="text-sm text-gray-500 font-medium mb-1">Nilai Terendah</p>
+                    <div className="flex items-end gap-2">
+                        <p className="text-2xl font-bold text-red-500">{summaryData.lowest_score || 0}</p>
+                        <p className="text-xs text-gray-400 mb-1 truncate max-w-[80px]" title={summaryData.lowest_subject || '-'}>{summaryData.lowest_subject || '-'}</p>
+                    </div>
+                  </div>
+              </div>
+            ) : null}
 
             {/* Grades List */}
             <div>
               <h4 className="font-bold text-gray-900 mb-3">Daftar Nilai</h4>
               {loadingGrades ? (
                 <Loading text="Memuat nilai..." />
-              ) : studentGrades.length > 0 ? (
+              ) : filteredGrades.length > 0 ? (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {studentGrades.map((grade) => (
+                  {filteredGrades.map((grade) => (
                     <div
                       key={grade.id}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"

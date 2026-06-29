@@ -42,17 +42,16 @@ export default function GuruDashboard() {
     const [loading, setLoading] = useState(true);
 
     const [filters, setFilters] = useState({
-        semester: "",
         kelas: "",
+        academic_year_id: "",
+        semester: "",
     });
 
+    const [academicYears, setAcademicYears] = useState([]);
+
     const SEMESTER_OPTIONS = [
-        { value: "Ganjil 2023/2024", label: "Ganjil 2023/2024" },
-        { value: "Genap 2023/2024", label: "Genap 2023/2024" },
-        { value: "Ganjil 2024/2025", label: "Ganjil 2024/2025" },
-        { value: "Genap 2024/2025", label: "Genap 2024/2025" },
-        { value: "Ganjil 2025/2026", label: "Ganjil 2025/2026" },
-        { value: "Genap 2025/2026", label: "Genap 2025/2026" },
+        { value: "odd", label: "Ganjil" },
+        { value: "even", label: "Genap" },
     ];
 
     useEffect(() => {
@@ -68,9 +67,19 @@ export default function GuruDashboard() {
 
     useEffect(() => {
         if (isGuru) {
+            loadAcademicYears();
             loadData();
         }
     }, [isGuru, filters]);
+
+    const loadAcademicYears = async () => {
+        try {
+            const res = await api.getAcademicYears();
+            setAcademicYears(res.data?.data || res.data || []);
+        } catch (error) {
+            console.error("Failed to load academic years", error);
+        }
+    };
 
     const loadData = async () => {
         try {
@@ -80,6 +89,7 @@ export default function GuruDashboard() {
             };
             
             if (filters.semester) params.semester = filters.semester;
+            if (filters.academic_year_id) params.academic_year_id = filters.academic_year_id;
             if (filters.kelas) params.class = filters.kelas;
 
             const [gradesRes, studentsRes] = await Promise.all([
@@ -107,6 +117,33 @@ export default function GuruDashboard() {
         const s = new Set(students.map(std => std.class || std.kelas).filter(Boolean));
         return Array.from(s).sort();
     }, [students]);
+
+    const getFilterLabel = () => {
+        const kelasLabel = filters.kelas ? `Kelas ${filters.kelas}` : "Semua kelas";
+        
+        let semLabel = "";
+        if (filters.semester === "odd") semLabel = "Ganjil";
+        else if (filters.semester === "even") semLabel = "Genap";
+        
+        let yearLabel = "";
+        if (filters.academic_year_id) {
+            const ay = academicYears.find(y => String(y.id) === String(filters.academic_year_id));
+            if (ay) yearLabel = ay.name;
+        }
+
+        let timeLabel = "";
+        if (!semLabel && !yearLabel) {
+            timeLabel = "Semua semester dan tahun ajaran";
+        } else if (!semLabel && yearLabel) {
+            timeLabel = `Semua Semester ${yearLabel}`;
+        } else if (semLabel && !yearLabel) {
+            timeLabel = `${semLabel} Semua tahun ajaran`;
+        } else {
+            timeLabel = `${semLabel} ${yearLabel}`;
+        }
+
+        return `${kelasLabel} • ${timeLabel}`;
+    };
 
     const filteredGrades = grades; // Data sudah difilter oleh API
 
@@ -161,6 +198,15 @@ export default function GuruDashboard() {
                             value={filters.kelas}
                             onChange={handleFilterChange}
                             options={classes.map(c => ({ value: c, label: c }))}
+                        />
+                   </div>
+                   <div className="w-full md:w-64">
+                        <Select
+                            name="academic_year_id"
+                            placeholder="Semua Tahun Ajaran"
+                            value={filters.academic_year_id}
+                            onChange={handleFilterChange}
+                            options={academicYears.map(ay => ({ value: ay.id, label: ay.name }))}
                         />
                    </div>
                    <div className="w-full md:w-64">
@@ -223,7 +269,7 @@ export default function GuruDashboard() {
                         <div className="mb-4">
                             <h3 className="text-lg font-bold text-gray-900">Distribusi Nilai</h3>
                              <p className="text-sm text-gray-500">
-                                {filters.kelas ? `Kelas ${filters.kelas}` : "Semua Kelas"} • {filters.semester || "Semua Semester"}
+                                {getFilterLabel()}
                             </p>
                         </div>
                         <SimpleBarChart data={chartData} />

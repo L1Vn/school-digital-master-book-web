@@ -14,14 +14,11 @@ import Badge from "../../components/atoms/Badge";
 import AddGradeModal from "../../components/organisms/modals/AddGradeModal";
 import toast from "react-hot-toast";
 import { HiPlus, HiUser } from "react-icons/hi2";
+import * as api from "../../lib/api";
 
 const SEMESTER_OPTIONS = [
-  { value: "Ganjil 2023/2024", label: "Ganjil 2023/2024" },
-  { value: "Genap 2023/2024", label: "Genap 2023/2024" },
-  { value: "Ganjil 2024/2025", label: "Ganjil 2024/2025" },
-  { value: "Genap 2024/2025", label: "Genap 2024/2025" },
-  { value: "Ganjil 2025/2026", label: "Ganjil 2025/2026" },
-  { value: "Genap 2025/2026", label: "Genap 2025/2026" },
+  { value: "odd", label: "Ganjil" },
+  { value: "even", label: "Genap" },
 ];
 
 export default function InputNilaiPage() {
@@ -48,9 +45,12 @@ export default function InputNilaiPage() {
   // Filter
   const [filters, setFilters] = useState({
     kelas: "",
+    academic_year_id: "",
     semester: "",
     search: "",
   });
+
+  const [academicYears, setAcademicYears] = useState([]);
 
   const [inputValues, setInputValues] = useState({});
 
@@ -68,19 +68,33 @@ export default function InputNilaiPage() {
   // Load Data
   useEffect(() => {
     if (isGuru) {
+      loadAcademicYears();
       loadData();
     }
-  }, [isGuru, filters.kelas, filters.semester]);
+  }, [isGuru, filters.kelas, filters.semester, filters.academic_year_id]);
+
+  const loadAcademicYears = async () => {
+      try {
+          const res = await api.getAcademicYears();
+          setAcademicYears(res.data?.data || res.data || []);
+      } catch (error) {
+          console.error("Failed to load academic years", error);
+      }
+  };
 
   const loadData = async () => {
     // Siapkan parameter
     const commonParams = { per_page: 1000 };
     if (filters.kelas) commonParams.class = filters.kelas;
 
+    const gradesParams = { ...commonParams };
+    if (filters.semester) gradesParams.semester = filters.semester;
+    if (filters.academic_year_id) gradesParams.academic_year_id = filters.academic_year_id;
+
     // Fetch Paralel
     await Promise.all([
       fetchStudents(commonParams), // Updates 'students' state
-      fetchGrades({ ...commonParams, semester: filters.semester }), // Updates 'grades' state
+      fetchGrades(gradesParams), // Updates 'grades' state
     ]);
   };
 
@@ -95,18 +109,24 @@ export default function InputNilaiPage() {
     // students come from hook state
     students.forEach((s) => {
       const g = grades.find(
-        (gx) => gx.student_id == s.nis && gx.semester === filters.semester,
+        (gx) => gx.student_id == s.nis && 
+                (filters.semester ? gx.semester === filters.semester : true) && 
+                (filters.academic_year_id ? gx.academic_year_id == filters.academic_year_id : true)
       );
       newValues[s.nis] = g ? g.score : "";
     });
     setInputValues(newValues);
-  }, [grades, students, filters.semester]);
+  }, [grades, students, filters.semester, filters.academic_year_id]);
 
   const handleInputChange = (studentId, value) => {
     setInputValues((prev) => ({ ...prev, [studentId]: value }));
   };
 
   const handleSaveGrade = async (studentId) => {
+    if (!filters.academic_year_id) {
+      toast.error("Pilih tahun ajaran terlebih dahulu");
+      return;
+    }
     if (!filters.semester) {
       toast.error("Pilih semester terlebih dahulu");
       return;
@@ -126,12 +146,15 @@ export default function InputNilaiPage() {
 
     const toastId = toast.loading("Menyimpan...");
     const existingGrade = grades.find(
-      (g) => g.student_id == studentId && g.semester === filters.semester,
+      (g) => g.student_id == studentId && 
+             g.semester === filters.semester &&
+             g.academic_year_id == filters.academic_year_id
     );
 
     try {
       const updatedGrade = await saveGrade(
         studentId,
+        filters.academic_year_id,
         filters.semester,
         numScore,
         existingGrade?.id,
@@ -160,16 +183,12 @@ export default function InputNilaiPage() {
   // Logika Tampilan Terfilter
   const studentIdsWithGrades = useMemo(() => {
     return grades
-      .filter((g) => g.semester === filters.semester)
+      .filter((g) => g.semester === filters.semester && g.academic_year_id == filters.academic_year_id)
       .map((g) => String(g.student_id));
-  }, [grades, filters.semester]);
+  }, [grades, filters.semester, filters.academic_year_id]);
 
   const displayedStudents = useMemo(() => {
-    if (!filters.semester) return [];
-
     return students.filter((s) => {
-      const hasGrade = studentIdsWithGrades.includes(String(s.nis));
-      if (!hasGrade) return false;
 
       const matchSearch = filters.search
         ? (s.name?.toLowerCase() || "").includes(
@@ -199,13 +218,17 @@ export default function InputNilaiPage() {
               variant="primary"
               className="flex items-center gap-2"
               onClick={() => {
+                if (!filters.academic_year_id) {
+                   toast.error("Pilih tahun ajaran terlebih dahulu");
+                   return;
+                }
                 if (!filters.semester) {
                    toast.error("Pilih semester terlebih dahulu");
                    return;
                 }
                 setIsModalOpen(true);
               }}
-              disabled={!filters.semester}
+              disabled={!filters.semester || !filters.academic_year_id}
             >
               <HiPlus className="w-5 h-5" />
               Tambah Nilai
@@ -215,7 +238,23 @@ export default function InputNilaiPage() {
 
         {/* Filters */}
         <Card className="mb-6 sticky top-0 z-10 shadow-md">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Select
+              name="kelas"
+              label="Kelas"
+              placeholder="Pilih Kelas"
+              value={filters.kelas}
+              onChange={handleFilterChange}
+              options={classes.map((c) => ({ value: c.name || c, label: c.name || c }))}
+            />
+            <Select
+              name="academic_year_id"
+              label="Tahun Ajaran"
+              placeholder="Pilih Tahun Ajaran"
+              value={filters.academic_year_id}
+              onChange={handleFilterChange}
+              options={academicYears.map(ay => ({ value: ay.id, label: ay.name }))}
+            />
             <Select
               name="semester"
               label="Semester"
@@ -223,14 +262,6 @@ export default function InputNilaiPage() {
               value={filters.semester}
               onChange={handleFilterChange}
               options={SEMESTER_OPTIONS}
-            />
-            <Select
-              name="kelas"
-              label="Kelas"
-              placeholder="Semua Kelas"
-              value={filters.kelas}
-              onChange={handleFilterChange}
-              options={classes.map((c) => ({ value: c.id || c, label: c.name || c }))}
             />
             <Input
               name="search"
@@ -291,9 +322,16 @@ export default function InputNilaiPage() {
                     <span className="px-2 py-1 bg-gray-100 rounded text-gray-600 font-medium">
                       Kelas: {student.class?.name || (typeof student.class === 'string' ? student.class : null) || student.kelas || "N/A"}
                     </span>
-                    <span className="px-2 py-1 bg-gray-100 rounded text-gray-600 font-medium">
-                      Sem: {filters.semester}
-                    </span>
+                    {filters.academic_year_id && (
+                      <span className="px-2 py-1 bg-gray-100 rounded text-gray-600 font-medium">
+                        TA: {academicYears.find(ay => String(ay.id) === String(filters.academic_year_id))?.name || "N/A"}
+                      </span>
+                    )}
+                    {filters.semester && (
+                      <span className="px-2 py-1 bg-gray-100 rounded text-gray-600 font-medium">
+                        Sem: {filters.semester === "odd" ? "Ganjil" : (filters.semester === "even" ? "Genap" : "N/A")}
+                      </span>
+                    )}
                   </div>
 
                   <div className="border-t border-gray-50 pt-4">

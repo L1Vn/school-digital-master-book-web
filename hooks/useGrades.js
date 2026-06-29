@@ -20,9 +20,10 @@ export function useGrades() {
         }
     }, []);
 
-    const saveGrade = async (studentId, semester, score, existingGradeId = null) => {
+    const saveGrade = async (studentId, academicYearId, semester, score, existingGradeId = null) => {
         const data = {
             student_id: studentId,
+            academic_year_id: academicYearId,
             semester: semester,
             score: score
         };
